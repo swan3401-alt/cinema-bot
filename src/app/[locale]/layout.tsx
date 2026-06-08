@@ -30,14 +30,12 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <head>
+    <html lang={locale} suppressHydrationWarning>
+      <body className="bg-gray-950 text-white min-h-screen">
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="bg-gray-950 text-white min-h-screen">
         <NextIntlClientProvider messages={messages}>
           <TelegramLocaleSync />
           <div className="flex justify-between items-center px-4 py-3 max-w-md mx-auto">

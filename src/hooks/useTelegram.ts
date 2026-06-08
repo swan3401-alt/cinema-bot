@@ -16,41 +16,37 @@ interface UseTelegramReturn {
   isReady: boolean;
 }
 
-interface TelegramWebApp {
-  ready: () => void;
-  expand?: () => void;
-  initDataUnsafe?: { user?: TelegramUser };
-}
-
-interface WindowWithTelegram extends Window {
-  Telegram?: { WebApp?: TelegramWebApp };
-}
-
 export function useTelegram(): UseTelegramReturn {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isTelegram, setIsTelegram] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const tg = (window as WindowWithTelegram).Telegram?.WebApp;
+    let attempts = 0;
+    const maxAttempts = 20; // ~2 seconds at 100ms intervals
 
-    if (tg) {
-      tg.ready();
-      tg.expand?.();
+    const interval = setInterval(() => {
+      const tg = (window as unknown as { Telegram?: { WebApp?: any } }).Telegram?.WebApp;
+      attempts++;
 
-      const telegramUser = tg.initDataUnsafe?.user;
-      Promise.resolve().then(() => {
+      if (tg) {
+        clearInterval(interval);
+        tg.ready();
+        tg.expand();
         setIsTelegram(true);
 
-        if (telegramUser) {
-          setUser(telegramUser);
-        }
+        const telegramUser = tg.initDataUnsafe?.user;
+        if (telegramUser) setUser(telegramUser);
 
         setIsReady(true);
-      });
-    } else {
-      Promise.resolve().then(() => setIsReady(true));
-    }
+      } else if (attempts >= maxAttempts) {
+        // Script never loaded — we're not inside Telegram
+        clearInterval(interval);
+        setIsReady(true);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
   }, []);
 
   return { user, isTelegram, isReady };
