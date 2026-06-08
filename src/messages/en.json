@@ -1,0 +1,57 @@
+{
+  "common": {
+    "appName": "Cinema Ticket",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "back": "Back"
+  },
+  "movie": {
+    "date": "Date",
+    "time": "Time",
+    "hall": "Hall",
+    "available": "Available seats",
+    "pricePerSeat": "Price per seat",
+    "selectSeat": "Select Seat",
+    "soldOut": "Sold Out"
+  },
+  "seats": {
+    "title": "Select your seat",
+    "wide": "Wide seat",
+    "standard": "Standard seat",
+    "available": "Available",
+    "booked": "Booked",
+    "selected": "Selected",
+    "confirm": "Confirm",
+    "total": "Total",
+    "seatsSelected": "{count} seats selected",
+    "noSeatSelected": "Select seats to continue"
+  },
+  "booking": {
+    "title": "Booking",
+    "pay": "Pay now",
+    "seat": "Seat",
+    "row": "Row",
+    "success": "Payment successful!",
+    "ticketReady": "Your ticket is ready",
+    "confirm": "Confirm booking",
+    "orderSummary": "Order summary",
+    "movie": "Movie",
+    "date": "Date",
+    "hall": "Hall",
+    "seats": "Seats",
+    "totalAmount": "Total amount",
+    "proceedToPayment": "Proceed to payment",
+    "seatAlreadyBooked": "One or more selected seats were just taken. Please choose again.",
+    "errorCreating": "Failed to create booking. Please try again."
+  },
+  "success": {
+    "title": "Booking confirmed!",
+    "subtitle": "Show this QR code at the entrance",
+    "movieDetails": "Movie details",
+    "yourSeats": "Your seats",
+    "verifying": "Verifying payment...",
+    "paymentPending": "Waiting for payment confirmation",
+    "downloadTicket": "Download ticket",
+    "backHome": "Back to home"
+  }
+}

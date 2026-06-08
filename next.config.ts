@@ -1,7 +1,27 @@
-import type { NextConfig } from "next";
+// import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+// const nextConfig: NextConfig = {
+//   /* config options here */
+  
 
-export default nextConfig;
+// };
+
+
+// export default nextConfig;
+
+
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+export default withNextIntl({
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        port: '',
+      },
+    ],
+  },
+});
