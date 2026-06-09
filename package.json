@@ -19,6 +19,7 @@
     "axios": "^1.17.0",
     "better-sqlite3": "^12.10.0",
     "grammy": "^1.43.0",
+    "html5-qrcode": "^2.3.8",
     "nanoid": "^5.1.11",
     "next": "16.2.7",
     "next-intl": "^4.13.0",
