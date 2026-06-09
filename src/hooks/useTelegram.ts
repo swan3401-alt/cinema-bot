@@ -10,6 +10,14 @@ interface TelegramUser {
   language_code?: string;
 }
 
+interface TelegramWebApp {
+  ready: () => void;
+  expand: () => void;
+  initDataUnsafe?: {
+    user?: TelegramUser;
+  };
+}
+
 interface UseTelegramReturn {
   user: TelegramUser | null;
   isTelegram: boolean;
@@ -23,10 +31,11 @@ export function useTelegram(): UseTelegramReturn {
 
   useEffect(() => {
     let attempts = 0;
-    const maxAttempts = 20; // ~2 seconds at 100ms intervals
+    const maxAttempts = 20;
 
     const interval = setInterval(() => {
-      const tg = (window as unknown as { Telegram?: { WebApp?: any } }).Telegram?.WebApp;
+      const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } })
+        .Telegram?.WebApp;
       attempts++;
 
       if (tg) {
@@ -40,7 +49,6 @@ export function useTelegram(): UseTelegramReturn {
 
         setIsReady(true);
       } else if (attempts >= maxAttempts) {
-        // Script never loaded — we're not inside Telegram
         clearInterval(interval);
         setIsReady(true);
       }

@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Movie } from "@/types";
 
+// interface Props {
+//   movie: Movie;
+//   availableSeats: number;
+//   formattedDate: string;
+// }
+
 interface Props {
-  movie: Movie;
+  movie: Omit<Movie, "seats">;
   availableSeats: number;
   formattedDate: string;
 }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import MovieCard from "@/components/MovieCard";
 import { notFound } from "next/navigation";
+import { activeBookingFilter } from "@/lib/availability";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,19 @@ export default async function Home({
 
   const movie = await prisma.movie.findFirst({
     orderBy: { date: "asc" },
-    include: { seats: true },
+    include: {
+      seats: {
+        include: {
+          bookings: { where: activeBookingFilter(), select: { id: true } },
+        },
+      },
+    },
   });
 
   if (!movie) return notFound();
 
-  const availableSeats = movie.seats.filter((s) => !s.isBooked).length;
+  // A seat is available if it has no active bookings
+  const availableSeats = movie.seats.filter((s) => s.bookings.length === 0).length;
 
   const formattedDate = movie.date.toLocaleDateString(locale, {
     weekday: "long",

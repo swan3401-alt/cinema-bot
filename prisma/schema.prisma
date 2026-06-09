@@ -30,21 +30,38 @@ model Movie {
   time        String
   hall        String
   totalSeats  Int
-  price       Int       // in UZS
+  price       Int
   createdAt   DateTime  @default(now())
   seats       Seat[]
   bookings    Booking[]
 }
 
 model Seat {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   movieId   String
   row       Int
   number    Int
-  type      SeatType @default(STANDARD)
-  isBooked  Boolean  @default(false)
-  movie     Movie    @relation(fields: [movieId], references: [id])
-  booking   Booking?
+  type      SeatType  @default(STANDARD)
+  movie     Movie     @relation(fields: [movieId], references: [id])
+  bookings  Booking[]
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  movieId     String
+  seatId      String
+  telegramId  String
+  token       String        @unique
+  status      BookingStatus @default(PENDING)
+  paymentRef  String?
+  paidAt      DateTime?
+  usedAt      DateTime?
+  createdAt   DateTime      @default(now())
+  movie       Movie         @relation(fields: [movieId], references: [id])
+  seat        Seat          @relation(fields: [seatId], references: [id])
+
+  @@index([seatId, status])
+  @@index([status, createdAt])
 }
 
 enum SeatType {
@@ -52,23 +69,10 @@ enum SeatType {
   STANDARD
 }
 
-model Booking {
-  id            String        @id @default(cuid())
-  movieId       String
-  seatId        String        @unique
-  telegramId    String
-  token         String        @unique  // used in QR code
-  status        BookingStatus @default(PENDING)
-  paymentRef    String?       // GlobalPay transaction reference
-  usedAt        DateTime?     // when QR was scanned at entrance
-  createdAt     DateTime      @default(now())
-  movie         Movie         @relation(fields: [movieId], references: [id])
-  seat          Seat          @relation(fields: [seatId], references: [id])
-}
-
 enum BookingStatus {
   PENDING
   PAID
   USED
+  EXPIRED
   CANCELLED
 }

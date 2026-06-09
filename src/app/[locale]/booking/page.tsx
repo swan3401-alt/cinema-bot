@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { buildSeatLayout } from "@/lib/seatLayout";
+import { activeBookingFilter } from "@/lib/availability";
 import SeatMap from "@/components/SeatMap";
 import { getTranslations } from "next-intl/server";
 
@@ -14,13 +15,25 @@ export default async function BookingPage() {
     include: {
       seats: {
         orderBy: [{ row: "asc" }, { number: "asc" }],
+        include: {
+          bookings: { where: activeBookingFilter(), select: { id: true } },
+        },
       },
     },
   });
 
   if (!movie) return notFound();
 
-  const rows = buildSeatLayout(movie.seats);
+  // A seat is booked if it has any active booking
+  const seatsWithStatus = movie.seats.map((seat) => ({
+    id: seat.id,
+    row: seat.row,
+    number: seat.number,
+    type: seat.type,
+    isBooked: seat.bookings.length > 0,
+  }));
+
+  const rows = buildSeatLayout(seatsWithStatus);
 
   return (
     <main className="min-h-screen bg-gray-950 pb-28">

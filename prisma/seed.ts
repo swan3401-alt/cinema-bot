@@ -34,21 +34,23 @@ async function main() {
 
   // Row 1: 9 wide seats
   for (let number = 1; number <= 9; number++) {
-    seatData.push({ movieId: movie.id, row: 1, number, type: SeatType.WIDE, isBooked: false });
+    seatData.push({ movieId: movie.id, row: 1, number, type: SeatType.WIDE });
   }
 
   // Rows 2-6: 11 standard seats each
   for (let row = 2; row <= 6; row++) {
     for (let number = 1; number <= 11; number++) {
-      seatData.push({ movieId: movie.id, row, number, type: SeatType.STANDARD, isBooked: false });
+      seatData.push({ movieId: movie.id, row, number, type: SeatType.STANDARD });
     }
   }
 
-  // Row 7: 9 standard seats - columns 1–4 and 7–11 (skip 5 and 6)
+  // Row 7: 9 standard seats - columns 1-4 and 7-11
   const row7Seats = [1, 2, 3, 4, 7, 8, 9, 10, 11];
   for (const number of row7Seats) {
-    seatData.push({ movieId: movie.id, row: 7, number, type: SeatType.STANDARD, isBooked: false });
+    seatData.push({ movieId: movie.id, row: 7, number, type: SeatType.STANDARD });
   }
+
+
 
   await prisma.seat.createMany({ data: seatData });
 
