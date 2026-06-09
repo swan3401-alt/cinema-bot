@@ -53,5 +53,11 @@
     "paymentPending": "To'lov tasdiqlanishi kutilmoqda",
     "downloadTicket": "Chiptani yuklab olish",
     "backHome": "Bosh sahifaga"
+  },
+  "ticket": {
+    "confirmed": "🎫 Chiptangiz tasdiqlandi!",
+    "row": "Qator",
+    "seat": "O'rin",
+    "showAtEntrance": "Ushbu QR kodni kirish vaqtida ko'rsating."
   }
 }

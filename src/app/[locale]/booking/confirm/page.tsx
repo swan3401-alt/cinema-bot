@@ -33,35 +33,6 @@ export default function ConfirmPage() {
       .catch(() => setError(t("common.error")));
   }, [movieId, t]);
 
-  // useEffect(() => {
-  //   if (!movieId) return;
-  //   setError(null);
-  //   fetch(`/api/movie/price?movieId=${movieId}`)
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.price) setPrice(data.price);
-  //     })
-  //     .catch(console.error); // silent fail — don't set error UI for this
-  // }, [movieId, t]);
-
-//   useEffect(() => {
-//   if (!movieId) return;
-  
-//   const controller = new AbortController();
-  
-//   fetch(`/api/movie/price?movieId=${movieId}`, { signal: controller.signal })
-//     .then((res) => res.json())
-//     .then((data) => {
-//       if (data.price) setPrice(data.price);
-//     })
-//     .catch((err) => {
-//       if (err.name !== "AbortError") {
-//         console.error(err);
-//       }
-//     });
-  
-//   return () => controller.abort();
-// }, [movieId]);
 
   useEffect(() => {
     if (redirectUrl) {
@@ -77,7 +48,7 @@ export default function ConfirmPage() {
       const createRes = await fetch("/api/booking/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seatIds, movieId, telegramId }),
+        body: JSON.stringify({ seatIds, movieId, telegramId, locale }),
       });
 
       const createData = await createRes.json();

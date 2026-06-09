@@ -51,6 +51,7 @@ model Booking {
   movieId     String
   seatId      String
   telegramId  String
+  locale      String        @default("uz")
   token       String        @unique
   status      BookingStatus @default(PENDING)
   paymentRef  String?

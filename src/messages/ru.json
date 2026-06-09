@@ -53,5 +53,11 @@
     "paymentPending": "Ожидание подтверждения оплаты",
     "downloadTicket": "Скачать билет",
     "backHome": "На главную"
+  },
+  "ticket": {
+    "confirmed": "🎫 Ваш билет подтверждён!",
+    "row": "Ряд",
+    "seat": "Место",
+    "showAtEntrance": "Покажите этот QR-код на входе."
   }
 }

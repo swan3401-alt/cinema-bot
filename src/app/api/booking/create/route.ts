@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { seatIds, movieId, telegramId } = await req.json();
+    const { seatIds, movieId, telegramId, locale } = await req.json();
 
     if (!seatIds?.length || !movieId || !telegramId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -33,7 +33,14 @@ export async function POST(req: NextRequest) {
     const bookings = await prisma.$transaction(
       seatIds.map((seatId: string) =>
         prisma.booking.create({
-          data: { movieId, seatId, telegramId, token: nanoid(12), status: "PENDING" },
+          data: {
+            movieId,
+            seatId,
+            telegramId,
+            locale: locale ?? "uz",
+            token: nanoid(12),
+            status: "PENDING",
+          },
         })
       )
     );

@@ -53,5 +53,11 @@
     "paymentPending": "Waiting for payment confirmation",
     "downloadTicket": "Download ticket",
     "backHome": "Back to home"
+  },
+  "ticket": {
+    "confirmed": "🎫 Your ticket is confirmed!",
+    "row": "Row",
+    "seat": "Seat",
+    "showAtEntrance": "Show this QR code at the entrance."
   }
 }
