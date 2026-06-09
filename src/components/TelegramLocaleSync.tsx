@@ -1,36 +1,34 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 const SUPPORTED_LOCALES = ["uz", "ru", "en"];
+const SYNC_KEY = "tg_locale_synced";
 
 export default function TelegramLocaleSync() {
   const router = useRouter();
   const pathname = usePathname();
-  const hasSynced = useRef(false);
 
   useEffect(() => {
-    if (hasSynced.current) return;
+    // Only ever sync once per session
+    if (sessionStorage.getItem(SYNC_KEY)) return;
 
     const tg = (window as unknown as {
       Telegram?: { WebApp?: { initDataUnsafe?: { user?: { language_code?: string } } } };
     }).Telegram?.WebApp;
 
-    // Only sync if there's a REAL Telegram user with a language code
     const langCode = tg?.initDataUnsafe?.user?.language_code;
-    if (!langCode) {
-      hasSynced.current = true; // mark done so manual switching works freely
-      return;
-    }
+
+    // Mark synced regardless, so manual switching is never overridden again
+    sessionStorage.setItem(SYNC_KEY, "1");
+
+    if (!langCode) return;
 
     const matched = SUPPORTED_LOCALES.includes(langCode) ? langCode : "uz";
     const segments = pathname.split("/");
-    const currentLocale = segments[1];
 
-    hasSynced.current = true;
-
-    if (currentLocale !== matched) {
+    if (segments[1] !== matched) {
       segments[1] = matched;
       router.replace(segments.join("/"));
     }

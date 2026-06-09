@@ -54,29 +54,31 @@ export default function SeatMap({ rows, price, movieId }: Props) {
         </p>
       </div>
 
-      {/* Seat grid */}
-      <div className="flex flex-col gap-2">
-        {rows.map(({ row, seats }) => (
-          <div key={row} className="flex items-center gap-1.5">
-            <span className="text-gray-600 text-xs w-4 text-right shrink-0">
-              {row}
-            </span>
-            <div className="flex gap-1">
-              {seats.map((seat, idx) =>
-                seat === null ? (
-                  <div key={`gap-${idx}`} className="w-8 h-7" />
-                ) : (
-                  <SeatButton
-                    key={seat.id}
-                    seat={seat}
-                    status={getStatus(seat)}
-                    onSelect={handleSelect}
-                  />
-                )
-              )}
+      {/* Seat grid - scrollable on mobile, centered on desktop */}
+      <div className="w-full overflow-x-auto">
+        <div className="flex flex-col gap-2 min-w-max mx-auto w-fit px-2">
+          {rows.map(({ row, seats }) => (
+            <div key={row} className="flex items-center gap-1.5">
+              <span className="text-gray-600 text-xs w-4 text-right shrink-0">
+                {row}
+              </span>
+              <div className="flex gap-1">
+                {seats.map((seat, idx) =>
+                  seat === null ? (
+                    <div key={`gap-${idx}`} className="w-8 h-7" />
+                  ) : (
+                    <SeatButton
+                      key={seat.id}
+                      seat={seat}
+                      status={getStatus(seat)}
+                      onSelect={handleSelect}
+                    />
+                  )
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Legend */}

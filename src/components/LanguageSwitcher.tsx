@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 const locales = [
   { code: "uz", label: "UZ" },
@@ -13,12 +13,17 @@ export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   function switchLocale(next: string) {
-    // Replace the current locale segment in the path
     const segments = pathname.split("/");
     segments[1] = next;
-    router.push(segments.join("/"));
+
+    // Preserve query string (seatIds, movieId, bookingIds, etc.)
+    const query = searchParams.toString();
+    const newPath = segments.join("/") + (query ? `?${query}` : "");
+
+    router.replace(newPath);
   }
 
   return (
