@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
+import { PENDING_TTL_MINUTES } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -12,19 +13,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check all seats are still available
-    const seats = await prisma.seat.findMany({
-      where: { id: { in: seatIds }, movieId },
+    const cutoff = new Date(Date.now() - PENDING_TTL_MINUTES * 60 * 1000);
+
+    // Clean up expired PENDING bookings for these seats first
+    const expired = await prisma.booking.findMany({
+      where: {
+        seatId: { in: seatIds },
+        status: "PENDING",
+        createdAt: { lt: cutoff },
+      },
     });
 
-    if (seats.length !== seatIds.length) {
-      return NextResponse.json({ error: "One or more seats not found" }, { status: 404 });
+    if (expired.length > 0) {
+      const expiredIds = expired.map((b) => b.id);
+      await prisma.$transaction([
+        prisma.booking.updateMany({
+          where: { id: { in: expiredIds } },
+          data: { status: "CANCELLED" },
+        }),
+        prisma.seat.updateMany({
+          where: { id: { in: expired.map((b) => b.seatId) } },
+          data: { isBooked: false },
+        }),
+      ]);
     }
 
-    const alreadyBooked = seats.filter((s) => s.isBooked);
-    if (alreadyBooked.length > 0) {
+    // Check for ACTIVE bookings (PAID, or PENDING within the TTL window)
+    const activeBookings = await prisma.booking.findMany({
+      where: {
+        seatId: { in: seatIds },
+        OR: [
+          { status: "PAID" },
+          { status: "PENDING", createdAt: { gte: cutoff } },
+        ],
+      },
+    });
+
+    if (activeBookings.length > 0) {
       return NextResponse.json(
-        { error: "One or more seats are already booked", seatIds: alreadyBooked.map((s) => s.id) },
+        { error: "One or more seats are already booked", seatIds: activeBookings.map((b) => b.seatId) },
         { status: 409 }
       );
     }
@@ -34,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Movie not found" }, { status: 404 });
     }
 
-    // Create bookings in a transaction - all or nothing
+    // Create new PENDING bookings
     const bookings = await prisma.$transaction(
       seatIds.map((seatId: string) =>
         prisma.booking.create({
