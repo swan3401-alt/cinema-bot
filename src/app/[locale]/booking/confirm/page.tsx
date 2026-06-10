@@ -65,7 +65,7 @@ export default function ConfirmPage() {
       const payRes = await fetch("/api/booking/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingIds: createData.bookingIds }),
+        body: JSON.stringify({ bookingIds: createData.bookingIds, locale }),
       });
 
       const payData = await payRes.json();

@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { bookingIds } = await req.json();
+    // const { bookingIds } = await req.json();
+    const { bookingIds, locale } = await req.json();
 
     if (!bookingIds?.length) {
       return NextResponse.json({ error: "Missing bookingIds" }, { status: 400 });
@@ -37,13 +38,22 @@ export async function POST(req: NextRequest) {
       .map((b) => `R${b.seat.row}·${b.seat.number}`)
       .join(", ");
 
+    const lang = locale ?? "uz";
+
     const payment = await createGlobalPayPayment({
       amount: totalAmount,
       orderId: bookingIds,
       description: `${movie.title} — ${seatLabels}`,
-      returnUrl: `${appUrl}/uz/booking/success?bookingIds=${bookingIds}`,
+      returnUrl: `${appUrl}/${lang}/booking/success?bookingIds=${bookingIds}`,
       webhookUrl: `${appUrl}/api/booking/webhook`,
     });
+    // const payment = await createGlobalPayPayment({
+    //   amount: totalAmount,
+    //   orderId: bookingIds,
+    //   description: `${movie.title} — ${seatLabels}`,
+    //   returnUrl: `${appUrl}/uz/booking/success?bookingIds=${bookingIds}`,
+    //   webhookUrl: `${appUrl}/api/booking/webhook`,
+    // });  
 
     if (!payment.success || !payment.paymentUrl) {
       return NextResponse.json({ error: "Failed to create payment" }, { status: 502 });
