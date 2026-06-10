@@ -74,7 +74,9 @@
     "statusAwaiting": "⏳ Ожидает оплаты",
     "statusPaid": "✅ Подтверждён",
     "statusUsed": "🎫 Использован",
-    "openApp": "Открыть приложение"
+    "openApp": "Открыть приложение",
+    "kbTickets": "🎟 Мои билеты",
+    "kbLanguage": "🌐 Язык"
   },
   "tickets": {
     "title": "Мои билеты",

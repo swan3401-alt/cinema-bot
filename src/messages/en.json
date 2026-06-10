@@ -74,7 +74,9 @@
     "statusAwaiting": "⏳ Awaiting payment",
     "statusPaid": "✅ Confirmed",
     "statusUsed": "🎫 Used",
-    "openApp": "Open app"
+    "openApp": "Open app",
+    "kbTickets": "🎟 My Tickets",
+    "kbLanguage": "🌐 Language"
   },
   "tickets": {
     "title": "My Tickets",

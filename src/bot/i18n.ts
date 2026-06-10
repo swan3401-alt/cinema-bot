@@ -4,7 +4,7 @@ import ru from "../messages/ru.json";
 import uz from "../messages/uz.json";
 
 const SUPPORTED = ["uz", "ru", "en"] as const;
-type Locale = (typeof SUPPORTED)[number];
+export type Locale = (typeof SUPPORTED)[number];
 
 const messages: Record<Locale, Record<string, unknown>> = { uz, ru, en };
 
