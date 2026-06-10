@@ -22,6 +22,12 @@ export default withNextIntl({
         hostname: 'upload.wikimedia.org',
         port: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'images-eu.ssl-images-amazon.com',
+        port: '',
+        pathname: '/images/S/pv-target-images/**',
+      },
     ],
   },
 });

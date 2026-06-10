@@ -17,13 +17,13 @@ async function main() {
   // Create the movie
   const movie = await prisma.movie.create({
     data: {
-      title: "Dune: Part Two",
+      title: "Veer Zaara",
       description:
-        "Paul Atreides unites with the Fremen while on a warpath of revenge against the conspirators who destroyed his family.",
-      posterUrl: "https://upload.wikimedia.org/wikipedia/en/5/52/Dune_Part_Two_poster.jpeg",
-      date: new Date("2026-06-15"),
-      time: "17:30",
-      hall: "VIP ZAL",
+        "",
+      posterUrl: "https://images-eu.ssl-images-amazon.com/images/S/pv-target-images/015f9181f6f9c66f73f2865f701b2047dee3cc35e20bcfc3cb5f2591b28d3ecb._RI_V_TTW_.jpg",
+      date: new Date("2026-06-14"),
+      time: "17:00",
+      hall: "Panorama, VIP ZAL",
       totalSeats: 73,
       price: 130000, // 130,000 UZS
     },
