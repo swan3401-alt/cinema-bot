@@ -57,12 +57,14 @@ model Booking {
   paymentRef  String?
   paidAt      DateTime?
   usedAt      DateTime?
+  reviewMsgId String?        // staff-group message id for the receipt
   createdAt   DateTime      @default(now())
   movie       Movie         @relation(fields: [movieId], references: [id])
   seat        Seat          @relation(fields: [seatId], references: [id])
 
   @@index([seatId, status])
   @@index([status, createdAt])
+  @@index([telegramId, status])
 }
 
 enum SeatType {
@@ -72,8 +74,15 @@ enum SeatType {
 
 enum BookingStatus {
   PENDING
+  AWAITING_PAYMENT
   PAID
   USED
   EXPIRED
   CANCELLED
+}
+
+model UserPref {
+  telegramId String   @id
+  locale     String
+  updatedAt  DateTime @updatedAt
 }

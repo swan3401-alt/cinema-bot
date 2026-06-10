@@ -40,6 +40,12 @@ export default function ConfirmPage() {
     }
   }, [redirectUrl]);
 
+const [instructions, setInstructions] = useState<{
+    cardNumber: string;
+    cardHolder: string;
+    totalAmount: number;
+  } | null>(null);
+
   async function handlePayment() {
     setLoading(true);
     setError(null);
@@ -50,7 +56,6 @@ export default function ConfirmPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seatIds, movieId, telegramId, locale }),
       });
-
       const createData = await createRes.json();
 
       if (!createRes.ok) {
@@ -65,16 +70,20 @@ export default function ConfirmPage() {
       const payRes = await fetch("/api/booking/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingIds: createData.bookingIds, locale }),
+        body: JSON.stringify({ bookingIds: createData.bookingIds }),
       });
-
       const payData = await payRes.json();
       if (!payRes.ok) throw new Error(payData.error);
 
-      setRedirectUrl(payData.paymentUrl);
+      setInstructions({
+        cardNumber: payData.cardNumber,
+        cardHolder: payData.cardHolder,
+        totalAmount: payData.totalAmount,
+      });
     } catch (err) {
       console.error(err);
       setError(t("booking.errorCreating"));
+    } finally {
       setLoading(false);
     }
   }
@@ -91,6 +100,39 @@ export default function ConfirmPage() {
   const formattedTotal = totalAmount !== null
     ? `${totalAmount.toLocaleString("en-US").replace(/,/g, " ")} UZS`
     : t("common.loading");
+
+
+
+  if (instructions) {
+    const amount = instructions.totalAmount.toLocaleString("en-US").replace(/,/g, " ");
+    return (
+      <main className="min-h-screen bg-gray-950 px-4 pt-6 pb-10 max-w-md mx-auto">
+        <h1 className="text-white text-xl font-bold mb-6">{t("payment.title")}</h1>
+        <div className="bg-gray-900 rounded-2xl p-5 flex flex-col gap-4">
+          <p className="text-gray-300 text-sm">{t("payment.transferInstruction", { amount })}</p>
+          <div className="bg-gray-950 rounded-xl p-4 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 text-xs">{t("payment.cardNumber")}</span>
+              <span className="text-white font-mono text-lg tracking-wider">{instructions.cardNumber}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 text-xs">{t("payment.cardHolder")}</span>
+              <span className="text-white">{instructions.cardHolder}</span>
+            </div>
+          </div>
+          <div className="bg-blue-900/30 border border-blue-800 rounded-xl p-4">
+            <p className="text-blue-200 text-sm">{t("payment.sendReceipt")}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => router.push(`/${locale}`)}
+          className="mt-6 w-full bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium py-3 rounded-xl"
+        >
+          {t("success.backHome")}
+        </button>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-950 px-4 pt-6 pb-10 max-w-md mx-auto">
@@ -112,16 +154,6 @@ export default function ConfirmPage() {
         </div>
       )}
 
-      {/* <button
-        onClick={handlePayment}
-        disabled={loading || price === null}
-        className="mt-6 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700
-                   disabled:text-gray-500 text-white font-semibold py-4 rounded-xl
-                   transition-colors text-lg"
-      >
-        {loading ? t("common.loading") : t("booking.proceedToPayment")}
-      </button> */}
-
       <button
         onClick={handlePayment}
         disabled={loading || price === null || !isReady}
@@ -134,6 +166,9 @@ export default function ConfirmPage() {
 
     </main>
   );
+
+
+
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {

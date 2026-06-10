@@ -1,32 +1,40 @@
 import { prisma } from "@/lib/prisma";
 import { PENDING_TTL_MINUTES } from "@/lib/constants";
 import { BookingStatus } from '@prisma/client';
+import {AWAITING_PAYMENT_TTL_MINUTES } from "@/lib/constants"
+
+function pendingCutoff() {
+  return new Date(Date.now() - PENDING_TTL_MINUTES * 60 * 1000);
+}
+function awaitingCutoff() {
+  return new Date(Date.now() - AWAITING_PAYMENT_TTL_MINUTES * 60 * 1000);
+}
 
 /** A seat is taken if it has a PAID/USED booking, or a PENDING booking within the TTL. */
 export function activeBookingFilter() {
-  const cutoff = new Date(Date.now() - PENDING_TTL_MINUTES * 60 * 1000);
   return {
     OR: [
-      // { status: { in: ["PAID", "USED"] as const } },
-      // { status: { in: ["PAID", "USED"] as BookingStatus[] } },
       { status: { in: [BookingStatus.PAID, BookingStatus.USED] } },
-      { status: "PENDING" as const, createdAt: { gte: cutoff } },
+      { status: BookingStatus.PENDING, createdAt: { gte: pendingCutoff() } },
+      { status: BookingStatus.AWAITING_PAYMENT, createdAt: { gte: awaitingCutoff() } },
     ],
   };
 }
 
 /** Mark abandoned PENDING bookings (older than TTL) as EXPIRED. Returns count. */
 export async function sweepExpiredBookings(seatIds?: string[]): Promise<number> {
-  const cutoff = new Date(Date.now() - PENDING_TTL_MINUTES * 60 * 1000);
-  const result = await prisma.booking.updateMany({
-    where: {
-      status: "PENDING",
-      createdAt: { lt: cutoff },
-      ...(seatIds ? { seatId: { in: seatIds } } : {}),
-    },
-    data: { status: "EXPIRED" },
-  });
-  return result.count;
+  const seatFilter = seatIds ? { seatId: { in: seatIds } } : {};
+  const [pending, awaiting] = await prisma.$transaction([
+    prisma.booking.updateMany({
+      where: { status: BookingStatus.PENDING, createdAt: { lt: pendingCutoff() }, ...seatFilter },
+      data: { status: BookingStatus.EXPIRED },
+    }),
+    prisma.booking.updateMany({
+      where: { status: BookingStatus.AWAITING_PAYMENT, createdAt: { lt: awaitingCutoff() }, ...seatFilter },
+      data: { status: BookingStatus.EXPIRED },
+    }),
+  ]);
+  return pending.count + awaiting.count;
 }
 
 /** Returns the set of seat IDs that are currently taken, from a given list. */

@@ -59,5 +59,35 @@
     "row": "Qator",
     "seat": "O'rin",
     "showAtEntrance": "Ushbu QR kodni kirish vaqtida ko'rsating."
+  },
+  "bot": {
+    "welcome": "Xush kelibsiz! Kino chiptalarini bron qilish uchun quyidagi tugmani bosing.",
+    "bookButton": "🎬 Chipta bron qilish",
+    "help": "/start — ilovani ochish, /mytickets - chiptalaringiz, /language - tilni o'zgartirish.",
+    "receiptReceived": "✅ Chek qabul qilindi! Xodimlarimiz tez orada to'lovni tasdiqlaydi.",
+    "noReservation": "Bronni topa olmadik. Avval o'rin bron qiling.",
+    "rejected": "❌ To'lov tasdiqlanmadi va bron bekor qilindi. Qaytadan urinib ko'ring yoki qo'llab-quvvatlashga murojaat qiling.",
+    "languagePrompt": "Tilni tanlang:",
+    "languageSet": "✅ Til o'zbekchaga o'zgartirildi.",
+    "myTicketsTitle": "🎟 Sizning chiptalaringiz",
+    "noTickets": "Sizda hali chiptalar yo'q.",
+    "statusAwaiting": "⏳ To'lov kutilmoqda",
+    "statusPaid": "✅ Tasdiqlangan",
+    "statusUsed": "🎫 Ishlatilgan",
+    "openApp": "Ilovani ochish"
+  },
+  "tickets": {
+    "title": "Mening chiptalarim",
+    "empty": "Sizda hali chiptalar yo'q.",
+    "awaiting": "To'lov kutilmoqda",
+    "confirmed": "Tasdiqlangan",
+    "used": "Ishlatilgan"
+  },
+  "payment": {
+    "title": "To'lov",
+    "transferInstruction": "Iltimos, {amount} UZS quyidagi kartaga o'tkazing:",
+    "cardNumber": "Karta raqami",
+    "cardHolder": "Karta egasi",
+    "sendReceipt": "O'tkazgandan so'ng, chek rasmini botga yuboring. Xodimlarimiz to'lovni tasdiqlab, chiptangizni yuboradi."
   }
 }

@@ -1,19 +1,25 @@
 import { Bot, InlineKeyboard } from "grammy";
+import { prisma } from "@/lib/prisma";
 import { verifyTicket } from "@/lib/verify";
+import { confirmBookings, rejectBookings } from "@/lib/confirmBooking";
+import { resolveLocale, tr } from "./i18n";
+
+
 
 const token = process.env.BOT_TOKEN;
 if (!token) throw new Error("BOT_TOKEN is not set");
 
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
 const STAFF_SECRET = process.env.STAFF_SECRET;
+const STAFF_GROUP_ID = process.env.STAFF_GROUP_ID;
 
 export const bot = new Bot(token);
 
 bot.command("start", async (ctx) => {
-  const keyboard = new InlineKeyboard().webApp("🎬 Book Tickets", APP_URL);
-  await ctx.reply("Welcome! Tap the button below to book your cinema tickets.", {
-    reply_markup: keyboard,
-  });
+  const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
+  const keyboard = new InlineKeyboard().webApp(tr(locale, "bot.bookButton"), APP_URL);
+  await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
 });
 
 bot.command("scan", async (ctx) => {
@@ -50,10 +56,147 @@ bot.command("scan", async (ctx) => {
     }
   } catch (e) {
     console.error("scan verify failed:", e);
-    await ctx.reply("⚠️ Verification timed out — please try again in a moment.");
+    await ctx.reply("⚠️ Verification timed out - please try again in a moment.");
   }
 });
 
+
 bot.command("help", async (ctx) => {
-  await ctx.reply("Use /start to open the cinema booking app.");
+  const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
+  await ctx.reply(tr(locale, "bot.help"));
+});
+
+
+bot.command("language", async (ctx) => {
+  const keyboard = new InlineKeyboard()
+    .text("O'zbekcha", "setlang:uz")
+    .text("Русский", "setlang:ru")
+    .text("English", "setlang:en");
+  const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
+  await ctx.reply(tr(locale, "bot.languagePrompt"), { reply_markup: keyboard });
+});
+
+
+
+bot.callbackQuery(/^setlang:(uz|ru|en)$/, async (ctx) => {
+  const newLocale = ctx.match[1];
+  const telegramId = ctx.from.id.toString();
+  await prisma.userPref.upsert({
+    where: { telegramId },
+    create: { telegramId, locale: newLocale },
+    update: { locale: newLocale },
+  });
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(tr(newLocale as "uz" | "ru" | "en", "bot.languageSet"));
+});
+
+
+
+import { getMyTickets } from "@/lib/myTickets";
+
+bot.command("mytickets", async (ctx) => {
+  const telegramId = ctx.from!.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from?.language_code);
+  const tickets = await getMyTickets(telegramId);
+
+  if (tickets.length === 0) {
+    await ctx.reply(tr(locale, "bot.noTickets"));
+    return;
+  }
+
+  const statusLabel: Record<string, string> = {
+    AWAITING_PAYMENT: tr(locale, "bot.statusAwaiting"),
+    PAID: tr(locale, "bot.statusPaid"),
+    USED: tr(locale, "bot.statusUsed"),
+  };
+
+  const lines = tickets.map((tk) => {
+    const dateStr = new Intl.DateTimeFormat(locale, {
+      day: "numeric", month: "long", year: "numeric",
+    }).format(tk.date);
+    return `${statusLabel[tk.status] ?? tk.status}\n🎬 ${tk.movieTitle}\n📅 ${dateStr} · ${tk.time}\n💺 ${tr(locale, "booking.row")} ${tk.row}, ${tr(locale, "booking.seat")} ${tk.number}`;
+  });
+
+  await ctx.reply(`${tr(locale, "bot.myTicketsTitle")}\n\n${lines.join("\n\n")}`);
+});
+
+
+
+
+// Customer sends a photo (receipt) → forward to staff group
+bot.on("message:photo", async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+
+  const awaiting = await prisma.booking.findMany({
+    where: { telegramId, status: "AWAITING_PAYMENT" },
+    include: { seat: true, movie: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (awaiting.length === 0) {
+    await ctx.reply(tr(locale, "bot.noReservation"));
+    return;
+  }
+
+  if (!STAFF_GROUP_ID) {
+    console.error("STAFF_GROUP_ID not set");
+    return;
+  }
+
+  const bookingIds = awaiting.map((b) => b.id).join(",");
+  const seatList = awaiting.map((b) => `R${b.seat.row}·${b.seat.number}`).join(", ");
+  const total = (awaiting[0].movie.price * awaiting.length)
+    .toLocaleString("en-US").replace(/,/g, " ");
+  const customer = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name;
+
+  const keyboard = new InlineKeyboard()
+    .text("✅ Approve", `approve:${bookingIds}`)
+    .text("❌ Reject", `reject:${bookingIds}`);
+
+  const photo = ctx.message.photo[ctx.message.photo.length - 1];
+  await ctx.api.sendPhoto(STAFF_GROUP_ID, photo.file_id, {
+    caption:
+      `🧾 Payment receipt\n\n` +
+      `👤 ${customer} (id ${telegramId})\n` +
+      `🎬 ${awaiting[0].movie.title}\n` +
+      `💺 ${seatList}\n` +
+      `💰 ${total} UZS`,
+    reply_markup: keyboard,
+  });
+
+  await ctx.reply(tr(locale, "bot.receiptReceived"));
+});
+
+
+
+// Staff taps Approve / Reject
+bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
+  const bookingIds = ctx.match[1].split(",");
+  const { confirmed } = await confirmBookings(bookingIds, `manual_${Date.now()}`);
+
+  await ctx.answerCallbackQuery(
+    confirmed > 0 ? "Approved - ticket sent" : "Already handled"
+  );
+  // Strip the buttons and mark the outcome on the staff message
+  const original = ctx.callbackQuery.message?.caption ?? "";
+  await ctx.editMessageCaption({
+    caption: `${original}\n\n✅ APPROVED by ${ctx.from.first_name}`,
+  }).catch(() => {});
+});
+
+bot.callbackQuery(/^reject:(.+)$/, async (ctx) => {
+  const bookingIds = ctx.match[1].split(",");
+  await rejectBookings(bookingIds);
+
+  const booking = await prisma.booking.findFirst({ where: { id: { in: bookingIds } } });
+  if (booking) {
+    await ctx.api
+      .sendMessage(booking.telegramId, tr(booking.locale as "uz" | "ru" | "en", "bot.rejected"))
+      .catch(() => {});
+  }
+
+  await ctx.answerCallbackQuery("Rejected - seats freed");
+  const original = ctx.callbackQuery.message?.caption ?? "";
+  await ctx.editMessageCaption({ caption: `${original}\n\n❌ REJECTED by ${ctx.from.first_name}` }).catch(() => {});
 });

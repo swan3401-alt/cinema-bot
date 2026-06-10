@@ -59,5 +59,35 @@
     "row": "Row",
     "seat": "Seat",
     "showAtEntrance": "Show this QR code at the entrance."
+  },
+    "bot": {
+    "welcome": "Welcome! Tap the button below to book your cinema tickets.",
+    "bookButton": "🎬 Book Tickets",
+    "help": "Use /start to open the cinema booking app, /mytickets to see your tickets, /language to change language.",
+    "receiptReceived": "✅ Receipt received! Our staff will confirm your payment shortly.",
+    "noReservation": "We couldn't find a pending reservation. Please book a seat first.",
+    "rejected": "❌ Your payment could not be confirmed and the reservation was cancelled. Please try again or contact support.",
+    "languagePrompt": "Choose your language:",
+    "languageSet": "✅ Language set to English.",
+    "myTicketsTitle": "🎟 Your tickets",
+    "noTickets": "You don't have any tickets yet.",
+    "statusAwaiting": "⏳ Awaiting payment",
+    "statusPaid": "✅ Confirmed",
+    "statusUsed": "🎫 Used",
+    "openApp": "Open app"
+  },
+  "tickets": {
+    "title": "My Tickets",
+    "empty": "You don't have any tickets yet.",
+    "awaiting": "Awaiting payment",
+    "confirmed": "Confirmed",
+    "used": "Used"
+  },
+  "payment": {
+    "title": "Payment",
+    "transferInstruction": "Please transfer {amount} UZS to the card below:",
+    "cardNumber": "Card number",
+    "cardHolder": "Card holder",
+    "sendReceipt": "After transferring, send a photo of the receipt to the bot. Our staff will confirm your payment and send your ticket."
   }
 }
