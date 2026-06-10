@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { verifyTicket } from "@/lib/verify";
 import { confirmBookings, rejectBookings } from "@/lib/confirmBooking";
 import { resolveLocale, tr } from "./i18n";
-
+import { getMyTickets } from "@/lib/myTickets";
+import { sendTicketToChat } from "@/lib/telegram";
 
 
 const token = process.env.BOT_TOKEN;
@@ -18,8 +19,19 @@ export const bot = new Bot(token);
 
 bot.command("start", async (ctx) => {
   const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
-  const keyboard = new InlineKeyboard().webApp(tr(locale, "bot.bookButton"), APP_URL);
-  await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
+
+  if (ctx.chat.type === "private") {
+    // web_app buttons are only valid in private chats
+    const keyboard = new InlineKeyboard().webApp(tr(locale, "bot.bookButton"), APP_URL);
+    await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
+  } else {
+    // In groups, link to the bot's private chat instead
+    const keyboard = new InlineKeyboard().url(
+      tr(locale, "bot.bookButton"),
+      `https://t.me/${ctx.me.username}`
+    );
+    await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
+  }
 });
 
 bot.command("scan", async (ctx) => {
@@ -92,7 +104,7 @@ bot.callbackQuery(/^setlang:(uz|ru|en)$/, async (ctx) => {
 
 
 
-import { getMyTickets } from "@/lib/myTickets";
+
 
 bot.command("mytickets", async (ctx) => {
   const telegramId = ctx.from!.id.toString();
@@ -118,6 +130,18 @@ bot.command("mytickets", async (ctx) => {
   });
 
   await ctx.reply(`${tr(locale, "bot.myTicketsTitle")}\n\n${lines.join("\n\n")}`);
+
+  // Re-send QR codes for confirmed (PAID) tickets only
+  const paid = tickets.filter((tk) => tk.status === "PAID");
+  for (const tk of paid) {
+    await sendTicketToChat({
+      token: tk.token,
+      telegramId,
+      locale,
+      seat: { row: tk.row, number: tk.number },
+      movie: { title: tk.movieTitle, date: tk.date, time: tk.time, hall: tk.hall },
+    });
+  }
 });
 
 

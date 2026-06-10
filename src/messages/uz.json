@@ -63,7 +63,7 @@
   "bot": {
     "welcome": "Xush kelibsiz! Kino chiptalarini bron qilish uchun quyidagi tugmani bosing.",
     "bookButton": "🎬 Chipta bron qilish",
-    "help": "/start — ilovani ochish, /mytickets - chiptalaringiz, /language - tilni o'zgartirish.",
+    "help": "/start - ilovani ochish, /mytickets - chiptalaringiz, /language - tilni o'zgartirish.",
     "receiptReceived": "✅ Chek qabul qilindi! Xodimlarimiz tez orada to'lovni tasdiqlaydi.",
     "noReservation": "Bronni topa olmadik. Avval o'rin bron qiling.",
     "rejected": "❌ To'lov tasdiqlanmadi va bron bekor qilindi. Qaytadan urinib ko'ring yoki qo'llab-quvvatlashga murojaat qiling.",
