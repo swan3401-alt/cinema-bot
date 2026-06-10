@@ -8,7 +8,7 @@
   "movie": {
     "date": "Дата",
     "time": "Время",
-    "hall": "Зал",
+    "hall": "Адрес",
     "available": "Свободных мест",
     "pricePerSeat": "Цена за место",
     "selectSeat": "Выбрать место",

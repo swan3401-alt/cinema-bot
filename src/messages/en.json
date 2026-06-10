@@ -8,7 +8,7 @@
   "movie": {
     "date": "Date",
     "time": "Time",
-    "hall": "Hall",
+    "hall": "Location",
     "available": "Available seats",
     "pricePerSeat": "Price per seat",
     "selectSeat": "Select Seat",

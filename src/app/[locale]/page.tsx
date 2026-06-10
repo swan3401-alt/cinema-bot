@@ -36,7 +36,7 @@ export default async function Home({
   });
 
   return (
-    <main className="min-h-screen bg-gray-950 pb-10">
+    <main className="bg-gray-950">
       <MovieCard movie={movie} availableSeats={availableSeats} formattedDate={formattedDate} />
     </main>
   );

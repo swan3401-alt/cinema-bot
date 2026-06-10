@@ -8,9 +8,18 @@ interface Props {
   onSelect: (seat: Seat) => void;
 }
 
+// const statusStyles: Record<SeatStatus, string> = {
+//   available: "bg-gray-700 hover:bg-blue-500 cursor-pointer border border-gray-600",
+//   selected:  "bg-blue-600 cursor-pointer border border-blue-400",
+//   booked:    "bg-gray-800 cursor-not-allowed border border-gray-700 opacity-40",
+// };
+
 const statusStyles: Record<SeatStatus, string> = {
-  available: "bg-gray-700 hover:bg-blue-500 cursor-pointer border border-gray-600",
-  selected:  "bg-blue-600 cursor-pointer border border-blue-400",
+  // available  - highlighted,                blue
+  available: "bg-blue-600 hover:bg-blue-500 cursor-pointer border border-blue-400",
+  // selected   - highlighted more brightly,  green
+  selected:  "bg-green-500 cursor-pointer border border-green-300",
+  // booked     - dimmed,                     dark gray
   booked:    "bg-gray-800 cursor-not-allowed border border-gray-700 opacity-40",
 };
 

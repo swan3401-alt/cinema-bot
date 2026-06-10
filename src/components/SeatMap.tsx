@@ -83,8 +83,11 @@ export default function SeatMap({ rows, price, movieId }: Props) {
 
       {/* Legend */}
       <div className="flex gap-4 text-xs text-gray-400">
-        <LegendItem color="bg-gray-700 border border-gray-600" label={t("seats.available")} />
+        {/* <LegendItem color="bg-gray-700 border border-gray-600" label={t("seats.available")} />
         <LegendItem color="bg-blue-600 border border-blue-400" label={t("seats.selected")} />
+        <LegendItem color="bg-gray-800 border border-gray-700 opacity-40" label={t("seats.booked")} /> */}
+        <LegendItem color="bg-blue-600 border border-blue-400" label={t("seats.available")} />
+        <LegendItem color="bg-green-500 border border-green-300" label={t("seats.selected")} />
         <LegendItem color="bg-gray-800 border border-gray-700 opacity-40" label={t("seats.booked")} />
       </div>
 
