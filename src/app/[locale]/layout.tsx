@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import HomeButton from "@/components/HomeButton";
 import TelegramLocaleSync from "@/components/TelegramLocaleSync";
+import TicketsButton from "@/components/TicketsButton";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -38,8 +39,11 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider messages={messages}>
           <TelegramLocaleSync />
-          <div className="flex justify-between items-center px-4 py-3 max-w-md mx-auto">
-            <HomeButton />
+          <div className="flex justify-between items-center px-4 py-3 max-w-md mx-auto relative z-20">
+            <div className="flex items-center gap-4">
+              <HomeButton />
+              <TicketsButton />
+            </div>
             <LanguageSwitcher />
           </div>
           {children}

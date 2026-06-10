@@ -83,7 +83,8 @@
     "empty": "Sizda hali chiptalar yo'q.",
     "awaiting": "To'lov kutilmoqda",
     "confirmed": "Tasdiqlangan",
-    "used": "Ishlatilgan"
+    "used": "Ishlatilgan",
+    "nav": "Chiptalar"
   },
   "payment": {
     "title": "To'lov",

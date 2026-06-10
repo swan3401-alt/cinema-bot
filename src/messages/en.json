@@ -83,7 +83,8 @@
     "empty": "You don't have any tickets yet.",
     "awaiting": "Awaiting payment",
     "confirmed": "Confirmed",
-    "used": "Used"
+    "used": "Used",
+    "nav": "Tickets"
   },
   "payment": {
     "title": "Payment",
