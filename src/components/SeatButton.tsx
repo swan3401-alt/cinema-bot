@@ -16,7 +16,7 @@ interface Props {
 
 const statusStyles: Record<SeatStatus, string> = {
   // available  - highlighted,                blue
-  available: "bg-blue-600 hover:bg-blue-500 cursor-pointer border border-blue-400",
+  available: "bg-blue-700 hover:bg-blue-500 cursor-pointer border border-blue-400",
   // selected   - highlighted more brightly,  green
   selected:  "bg-green-500 cursor-pointer border border-green-300",
   // booked     - dimmed,                     dark gray
