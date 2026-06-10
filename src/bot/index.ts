@@ -5,6 +5,7 @@ import { confirmBookings, rejectBookings } from "@/lib/confirmBooking";
 import { resolveLocale, tr } from "./i18n";
 import { getMyTickets } from "@/lib/myTickets";
 import { sendTicketToChat } from "@/lib/telegram";
+import { nanoid } from "nanoid";
 
 
 const token = process.env.BOT_TOKEN;
@@ -162,21 +163,26 @@ bot.on("message:photo", async (ctx) => {
     await ctx.reply(tr(locale, "bot.noReservation"));
     return;
   }
-
   if (!STAFF_GROUP_ID) {
     console.error("STAFF_GROUP_ID not set");
     return;
   }
 
-  const bookingIds = awaiting.map((b) => b.id).join(",");
+  // Short reference fits Telegram's 64-byte callback_data limit, any seat count
+  const reviewRef = nanoid(10);
+  await prisma.booking.updateMany({
+    where: { id: { in: awaiting.map((b) => b.id) } },
+    data: { reviewMsgId: reviewRef },
+  });
+
   const seatList = awaiting.map((b) => `R${b.seat.row}·${b.seat.number}`).join(", ");
   const total = (awaiting[0].movie.price * awaiting.length)
     .toLocaleString("en-US").replace(/,/g, " ");
   const customer = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name;
 
   const keyboard = new InlineKeyboard()
-    .text("✅ Approve", `approve:${bookingIds}`)
-    .text("❌ Reject", `reject:${bookingIds}`);
+    .text("✅ Approve", `approve:${reviewRef}`)
+    .text("❌ Reject", `reject:${reviewRef}`);
 
   const photo = ctx.message.photo[ctx.message.photo.length - 1];
   await ctx.api.sendPhoto(STAFF_GROUP_ID, photo.file_id, {
@@ -196,13 +202,18 @@ bot.on("message:photo", async (ctx) => {
 
 // Staff taps Approve / Reject
 bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
-  const bookingIds = ctx.match[1].split(",");
-  const { confirmed } = await confirmBookings(bookingIds, `manual_${Date.now()}`);
+  const reviewRef = ctx.match[1];
+  const bookings = await prisma.booking.findMany({
+    where: { reviewMsgId: reviewRef, status: "AWAITING_PAYMENT" },
+    select: { id: true },
+  });
 
-  await ctx.answerCallbackQuery(
-    confirmed > 0 ? "Approved - ticket sent" : "Already handled"
+  const { confirmed } = await confirmBookings(
+    bookings.map((b) => b.id),
+    `manual_${Date.now()}`
   );
-  // Strip the buttons and mark the outcome on the staff message
+
+  await ctx.answerCallbackQuery(confirmed > 0 ? "Approved - ticket sent" : "Already handled");
   const original = ctx.callbackQuery.message?.caption ?? "";
   await ctx.editMessageCaption({
     caption: `${original}\n\n✅ APPROVED by ${ctx.from.first_name}`,
@@ -210,17 +221,21 @@ bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
 });
 
 bot.callbackQuery(/^reject:(.+)$/, async (ctx) => {
-  const bookingIds = ctx.match[1].split(",");
-  await rejectBookings(bookingIds);
+  const reviewRef = ctx.match[1];
+  const bookings = await prisma.booking.findMany({
+    where: { reviewMsgId: reviewRef, status: "AWAITING_PAYMENT" },
+  });
 
-  const booking = await prisma.booking.findFirst({ where: { id: { in: bookingIds } } });
-  if (booking) {
+  if (bookings.length > 0) {
+    await rejectBookings(bookings.map((b) => b.id));
     await ctx.api
-      .sendMessage(booking.telegramId, tr(booking.locale as "uz" | "ru" | "en", "bot.rejected"))
+      .sendMessage(bookings[0].telegramId, tr(bookings[0].locale as "uz" | "ru" | "en", "bot.rejected"))
       .catch(() => {});
   }
 
-  await ctx.answerCallbackQuery("Rejected - seats freed");
+  await ctx.answerCallbackQuery("Rejected — seats freed");
   const original = ctx.callbackQuery.message?.caption ?? "";
-  await ctx.editMessageCaption({ caption: `${original}\n\n❌ REJECTED by ${ctx.from.first_name}` }).catch(() => {});
+  await ctx.editMessageCaption({
+    caption: `${original}\n\n❌ REJECTED by ${ctx.from.first_name}`,
+  }).catch(() => {});
 });
