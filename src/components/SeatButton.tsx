@@ -16,11 +16,11 @@ interface Props {
 
 const statusStyles: Record<SeatStatus, string> = {
   // available  - highlighted,                blue
-  available: "bg-indigo-900 hover:bg-blue-500 cursor-pointer border border-indigo-900",
+  available: "bg-indigo-700 hover:bg-blue-500 cursor-pointer border-3 border-indigo-700",
   // selected   - highlighted more brightly,  green
-  selected:  "bg-green-500 cursor-pointer border border-green-300",
+  selected:  "bg-green-500 cursor-pointer border-3 border-green-300",
   // booked     - dimmed,                     dark gray
-  booked:    "bg-gray-800 cursor-not-allowed border border-indigo-800 opacity-40",
+  booked:    "bg-gray-800 cursor-not-allowed border-3 border-indigo-800 opacity-40",
 };
 
 export default function SeatButton({ seat, status, onSelect }: Props) {

@@ -46,6 +46,12 @@ export default function SeatMap({ rows, price, movieId }: Props) {
   return (
     <div className="flex flex-col items-center gap-6 px-4 pb-10">
 
+    <div className="w-full overflow-x-auto scrollbar-themed pb-2">
+    <div className="flex flex-col gap-2 min-w-max mx-auto w-fit px-2">
+
+
+
+
       {/* Screen indicator */}
       <div className="w-full max-w-sm">
         <div className="h-1.5 w-full bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full opacity-60" />
@@ -80,16 +86,24 @@ export default function SeatMap({ rows, price, movieId }: Props) {
           ))}
         </div>
       </div>
+    
+    </div>
+    </div>
+
+
 
       {/* Legend */}
       <div className="flex gap-4 text-xs text-gray-400">
         {/* <LegendItem color="bg-gray-700 border border-gray-600" label={t("seats.available")} />
         <LegendItem color="bg-blue-600 border border-blue-400" label={t("seats.selected")} />
         <LegendItem color="bg-gray-800 border border-gray-700 opacity-40" label={t("seats.booked")} /> */}
-        <LegendItem color="bg-indigo-900 border border-blue-400" label={t("seats.available")} />
+        <LegendItem color="bg-indigo-700 border border-blue-400" label={t("seats.available")} />
         <LegendItem color="bg-green-500 border border-green-300" label={t("seats.selected")} />
         <LegendItem color="bg-gray-800 border border-gray-700 opacity-40" label={t("seats.booked")} />
       </div>
+
+
+
 
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-5 py-4">

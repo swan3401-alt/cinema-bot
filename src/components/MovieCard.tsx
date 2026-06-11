@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import { useEffect, useState } from "react";
 import { Movie } from "@/types";
 
 interface Props {
@@ -15,13 +16,20 @@ export default function MovieCard({ movie, availableSeats, formattedDate }: Prop
   const router = useRouter();
   const t = useTranslations();
   const locale = useLocale();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const formattedPrice = movie.price.toLocaleString("en-US").replace(/,/g, " ");
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* POSTER - sticky, fills the screen, stays pinned while content scrolls over it */}
-      <div className="sticky top-0 h-[calc(100svh-60px)] w-full overflow-hidden">
+      {/* POSTER - full screen, pinned from the start, never moves */}
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         <Image
           src={movie.posterUrl}
           alt={movie.title}
@@ -30,10 +38,28 @@ export default function MovieCard({ movie, availableSeats, formattedDate }: Prop
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
+
+        {/* Scroll-up hint —-fades out once the user pulls the content up */}
+        <div
+          className={`pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 z-10
+                      transition-opacity duration-500 ${scrolled ? "opacity-0" : "opacity-80"}`}
+        >
+          <svg
+            className="w-8 h-8 text-white animate-bounce drop-shadow-lg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 14l6-6 6 6" />
+            <path d="M6 19l6-6 6 6" />
+          </svg>
+        </div>
       </div>
 
-      {/* CONTENT - the next sibling, so it starts one full screen down (below the fold)
-          and rises over the pinned poster as you scroll. One frosted sheet = "blurred". */}
+      {/* CONTENT - next sibling, starts below the fold, rises over the pinned poster */}
       <div className="relative z-10 -mt-6 flex flex-col gap-4 rounded-t-3xl border-t border-white/10
                       bg-gray-950/30 backdrop-blur-xs px-5 pt-6 pb-10">
         <h1 className="text-3xl font-bold text-white drop-shadow-lg">{movie.title}</h1>
