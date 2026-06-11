@@ -110,13 +110,20 @@ const [instructions, setInstructions] = useState<{
         <h1 className="text-white text-xl font-bold mb-6">{t("payment.title")}</h1>
         <div className="bg-gray-900 rounded-2xl p-5 flex flex-col gap-4">
           <p className="text-gray-300 text-sm">{t("payment.transferInstruction", { amount })}</p>
-          <div className="bg-gray-950 rounded-xl p-4 flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 text-xs">{t("payment.cardNumber")}</span>
-              <span className="text-white font-mono text-lg tracking-wider">{instructions.cardNumber}</span>
+          <div className="flex flex-col gap-4">
+            <div className="relative border border-gray-700 rounded-xl px-3 pt-4 pb-3">
+              <span className="absolute -top-2.5 left-3 bg-gray-900 px-1 text-gray-500 text-xs">
+                {t("payment.cardNumber")}
+              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-white font-mono text-lg tracking-wider">{instructions.cardNumber}</span>
+                <CopyButton text={instructions.cardNumber} />
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 text-xs">{t("payment.cardHolder")}</span>
+            <div className="relative border border-gray-700 rounded-xl px-3 pt-4 pb-3">
+              <span className="absolute -top-2.5 left-3 bg-gray-900 px-1 text-gray-500 text-xs">
+                {t("payment.cardHolder")}
+              </span>
               <span className="text-white">{instructions.cardHolder}</span>
             </div>
           </div>
@@ -169,6 +176,36 @@ const [instructions, setInstructions] = useState<{
 
 
 
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-gray-400 hover:text-white transition-colors"
+      aria-label="Copy card number"
+    >
+      {copied ? (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  );
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
