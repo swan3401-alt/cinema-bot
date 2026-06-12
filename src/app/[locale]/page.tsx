@@ -12,21 +12,32 @@ export default async function Home({
 }) {
   const { locale } = await params;
 
-  const movie = await prisma.movie.findFirst({
+  // const movie = await prisma.movie.findFirst({
+  //   orderBy: { date: "asc" },
+  //   include: {
+  //     seats: {
+  //       include: {
+  //         bookings: { where: activeBookingFilter(), select: { id: true } },
+  //       },
+  //     },
+  //   },
+  // });
+
+  // if (!movie) return notFound();
+
+  // // A seat is available if it has no active bookings
+  // const availableSeats = movie.seats.filter((s) => s.bookings.length === 0).length;
+
+
+    const movie = await prisma.movie.findFirst({
     orderBy: { date: "asc" },
     include: {
-      seats: {
-        include: {
-          bookings: { where: activeBookingFilter(), select: { id: true } },
-        },
-      },
+      _count: { select: { bookings: { where: activeBookingFilter() } } },
     },
   });
-
   if (!movie) return notFound();
 
-  // A seat is available if it has no active bookings
-  const availableSeats = movie.seats.filter((s) => s.bookings.length === 0).length;
+  const availableSeats = movie.totalSeats - movie._count.bookings;
 
   const formattedDate = movie.date.toLocaleDateString(locale, {
     weekday: "long",

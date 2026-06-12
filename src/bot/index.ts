@@ -7,6 +7,8 @@ import { getMyTickets } from "@/lib/myTickets";
 import { sendTicketToChat } from "@/lib/telegram";
 import { nanoid } from "nanoid";
 
+import { buildKeyboardMarkup } from "./keyboard";
+
 
 const token = process.env.BOT_TOKEN;
 if (!token) throw new Error("BOT_TOKEN is not set");
@@ -20,28 +22,12 @@ export const bot = new Bot(token);
 
 const LOCALES: Locale[] = ["uz", "ru", "en"];
 
-// bot.command("start", async (ctx) => {
-//   const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
-
-//   if (ctx.chat.type === "private") {
-//     // web_app buttons are only valid in private chats
-//     const keyboard = new InlineKeyboard().webApp(tr(locale, "bot.bookButton"), APP_URL);
-//     await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
-//   } else {
-//     // In groups, link to the bot's private chat instead
-//     const keyboard = new InlineKeyboard().url(
-//       tr(locale, "bot.bookButton"),
-//       `https://t.me/${ctx.me.username}`
-//     );
-//     await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: keyboard });
-//   }
-// });
-
 bot.command("start", async (ctx) => {
   const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
 
   if (ctx.chat.type === "private") {
-    await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: buildReplyKeyboard(locale) });
+    // await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: buildReplyKeyboard(locale) });
+    await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: buildKeyboardMarkup(locale) });
   } else {
     const inline = new InlineKeyboard().url(tr(locale, "bot.bookButton"), `https://t.me/${ctx.me.username}`);
     await ctx.reply(tr(locale, "bot.welcome"), { reply_markup: inline });
@@ -69,7 +55,7 @@ bot.command("scan", async (ctx) => {
     if (result.ok) {
       const b = result.booking;
       await ctx.reply(
-        `✅ VALID — Admit\n\n🎬 ${b.movieTitle}\n🏛 ${b.hall}\n💺 Row ${b.row}, Seat ${b.number}`
+        `✅ VALID - Admit\n\n🎬 ${b.movieTitle}\n🏛 ${b.hall}\n💺 Row ${b.row}, Seat ${b.number}`
       );
     } else {
       const labels: Record<string, string> = {
@@ -92,30 +78,6 @@ bot.command("help", async (ctx) => {
   await ctx.reply(tr(locale, "bot.help"));
 });
 
-
-// bot.command("language", async (ctx) => {
-//   const keyboard = new InlineKeyboard()
-//     .text("O'zbekcha", "setlang:uz")
-//     .text("Русский", "setlang:ru")
-//     .text("English", "setlang:en");
-//   const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
-//   await ctx.reply(tr(locale, "bot.languagePrompt"), { reply_markup: keyboard });
-// });
-
-
-
-// bot.callbackQuery(/^setlang:(uz|ru|en)$/, async (ctx) => {
-//   const newLocale = ctx.match[1];
-//   const telegramId = ctx.from.id.toString();
-//   await prisma.userPref.upsert({
-//     where: { telegramId },
-//     create: { telegramId, locale: newLocale },
-//     update: { locale: newLocale },
-//   });
-//   await ctx.answerCallbackQuery();
-//   await ctx.editMessageText(tr(newLocale as "uz" | "ru" | "en", "bot.languageSet"));
-// });
-
 bot.command("language", async (ctx) => {
   const locale = await resolveLocale(ctx.from!.id.toString(), ctx.from?.language_code);
   await ctx.reply(tr(locale, "bot.languagePrompt"), { reply_markup: languagePickerKeyboard() });
@@ -132,7 +94,8 @@ bot.callbackQuery(/^setlang:(uz|ru|en)$/, async (ctx) => {
   await ctx.answerCallbackQuery();
   await ctx.editMessageReplyMarkup(); // drop the inline picker buttons
   // resend with the keyboard now relabeled in the new language
-  await ctx.reply(tr(newLocale, "bot.languageSet"), { reply_markup: buildReplyKeyboard(newLocale) });
+  // await ctx.reply(tr(newLocale, "bot.languageSet"), { reply_markup: buildReplyKeyboard(newLocale) });
+  await ctx.reply(tr(newLocale, "bot.languageSet"), { reply_markup: buildKeyboardMarkup(newLocale) });
 });
 
 
@@ -196,28 +159,6 @@ bot.on("message:photo", async (ctx) => {
 
   await ctx.reply(tr(locale, "bot.receiptReceived"));
 });
-
-
-
-// Staff taps Approve / Reject
-// bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
-//   const reviewRef = ctx.match[1];
-//   const bookings = await prisma.booking.findMany({
-//     where: { reviewMsgId: reviewRef, status: "AWAITING_PAYMENT" },
-//     select: { id: true },
-//   });
-
-//   const { confirmed } = await confirmBookings(
-//     bookings.map((b) => b.id),
-//     `manual_${Date.now()}`
-//   );
-
-//   await ctx.answerCallbackQuery(confirmed > 0 ? "Approved - ticket sent" : "Already handled");
-//   const original = ctx.callbackQuery.message?.caption ?? "";
-//   await ctx.editMessageCaption({
-//     caption: `${original}\n\n✅ APPROVED by ${ctx.from.first_name}`,
-//   }).catch(() => {});
-// });
 
 bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
   const reviewRef = ctx.match[1];
@@ -346,3 +287,4 @@ bot.on("message:text", async (ctx, next) => {
 
   return next(); // anything else falls through
 });
+
