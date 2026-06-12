@@ -200,6 +200,25 @@ bot.on("message:photo", async (ctx) => {
 
 
 // Staff taps Approve / Reject
+// bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
+//   const reviewRef = ctx.match[1];
+//   const bookings = await prisma.booking.findMany({
+//     where: { reviewMsgId: reviewRef, status: "AWAITING_PAYMENT" },
+//     select: { id: true },
+//   });
+
+//   const { confirmed } = await confirmBookings(
+//     bookings.map((b) => b.id),
+//     `manual_${Date.now()}`
+//   );
+
+//   await ctx.answerCallbackQuery(confirmed > 0 ? "Approved - ticket sent" : "Already handled");
+//   const original = ctx.callbackQuery.message?.caption ?? "";
+//   await ctx.editMessageCaption({
+//     caption: `${original}\n\n✅ APPROVED by ${ctx.from.first_name}`,
+//   }).catch(() => {});
+// });
+
 bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
   const reviewRef = ctx.match[1];
   const bookings = await prisma.booking.findMany({
@@ -207,17 +226,21 @@ bot.callbackQuery(/^approve:(.+)$/, async (ctx) => {
     select: { id: true },
   });
 
-  const { confirmed } = await confirmBookings(
+  const { confirmed, delivered } = await confirmBookings(
     bookings.map((b) => b.id),
     `manual_${Date.now()}`
   );
 
-  await ctx.answerCallbackQuery(confirmed > 0 ? "Approved - ticket sent" : "Already handled");
+  await ctx.answerCallbackQuery(confirmed > 0 ? "Approved" : "Already handled");
+
   const original = ctx.callbackQuery.message?.caption ?? "";
-  await ctx.editMessageCaption({
-    caption: `${original}\n\n✅ APPROVED by ${ctx.from.first_name}`,
-  }).catch(() => {});
+  let note = `\n\n✅ APPROVED by ${ctx.from.first_name}`;
+  if (confirmed > 0 && delivered < confirmed) {
+    note += `\n⚠️ Only ${delivered}/${confirmed} tickets delivered - tell the customer to tap "🎟 My Tickets" in the bot.`;
+  }
+  await ctx.editMessageCaption({ caption: `${original}${note}` }).catch(() => {});
 });
+
 
 bot.callbackQuery(/^reject:(.+)$/, async (ctx) => {
   const reviewRef = ctx.match[1];

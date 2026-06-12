@@ -9,35 +9,32 @@ import { sendTicketToChat } from "@/lib/telegram";
 export async function confirmBookings(
   bookingIds: string[],
   paymentRef: string
-): Promise<{ confirmed: number }> {
+): Promise<{ confirmed: number; delivered: number }> {
   const toConfirm = await prisma.booking.findMany({
     where: { id: { in: bookingIds }, status: { in: ["AWAITING_PAYMENT", "PENDING"] } },
     include: { seat: true, movie: true },
   });
 
-  if (toConfirm.length === 0) return { confirmed: 0 };
+  if (toConfirm.length === 0) return { confirmed: 0, delivered: 0 };
 
   await prisma.booking.updateMany({
     where: { id: { in: toConfirm.map((b) => b.id) } },
     data: { status: "PAID", paymentRef, paidAt: new Date() },
   });
 
+  let delivered = 0;
   for (const b of toConfirm) {
-    await sendTicketToChat({
+    const ok = await sendTicketToChat({
       token: b.token,
       telegramId: b.telegramId,
       locale: b.locale,
       seat: { row: b.seat.row, number: b.seat.number },
-      movie: {
-        title: b.movie.title,
-        date: b.movie.date,
-        time: b.movie.time,
-        hall: b.movie.hall,
-      },
+      movie: { title: b.movie.title, date: b.movie.date, time: b.movie.time, hall: b.movie.hall },
     });
+    if (ok) delivered++;
   }
 
-  return { confirmed: toConfirm.length };
+  return { confirmed: toConfirm.length, delivered };
 }
 
 /** Rejects/cancels bookings and frees the seats. */

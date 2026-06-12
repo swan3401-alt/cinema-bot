@@ -36,13 +36,23 @@ export async function POST(req: NextRequest) {
     });
 
     // Send the same instructions to the customer's chat
-    await sendPaymentInstructions({
+    // await sendPaymentInstructions({
+    //   telegramId: bookings[0].telegramId,
+    //   locale: bookings[0].locale,
+    //   amount: totalAmount,
+    //   cardNumber: PAYMENT_CARD_NUMBER,
+    //   cardHolder: PAYMENT_CARD_HOLDER,
+    // });
+    const sent = await sendPaymentInstructions({
       telegramId: bookings[0].telegramId,
       locale: bookings[0].locale,
       amount: totalAmount,
       cardNumber: PAYMENT_CARD_NUMBER,
       cardHolder: PAYMENT_CARD_HOLDER,
     });
+    if (!sent) {
+      console.warn("Payment instructions not delivered to chat:", bookings[0].telegramId);
+    }
 
     return NextResponse.json({
       mode: "manual",
