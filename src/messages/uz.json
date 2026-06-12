@@ -42,7 +42,8 @@
     "totalAmount": "Jami summa",
     "proceedToPayment": "To'lovga o'tish",
     "seatAlreadyBooked": "Tanlangan o'rinlardan biri band bo'lib qoldi. Iltimos, qaytadan tanlang.",
-    "errorCreating": "Buyurtma yaratishda xatolik. Iltimos, qaytadan urinib ko'ring."
+    "errorCreating": "Buyurtma yaratishda xatolik. Iltimos, qaytadan urinib ko'ring.",
+    "openViaBot": "Telegram hisobingizni aniqlay olmadik. Davom etish uchun ilovani bot orqali qaytadan oching."
   },
   "success": {
     "title": "Buyurtma tasdiqlandi!",

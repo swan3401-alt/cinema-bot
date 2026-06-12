@@ -42,7 +42,8 @@
     "totalAmount": "Total amount",
     "proceedToPayment": "Proceed to payment",
     "seatAlreadyBooked": "One or more selected seats were just taken. Please choose again.",
-    "errorCreating": "Failed to create booking. Please try again."
+    "errorCreating": "Failed to create booking. Please try again.",
+    "openViaBot": "We couldn't detect your Telegram account. Please reopen the app from the bot to continue."
   },
   "success": {
     "title": "Booking confirmed!",

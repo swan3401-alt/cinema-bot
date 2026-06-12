@@ -22,7 +22,7 @@ export default function ConfirmPage() {
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [price, setPrice] = useState<number | null>(null);
 
-  const telegramId = user?.id?.toString() ?? "preview_user";
+  // const telegramId = user?.id?.toString() ?? "preview_user";
 
   // Fetch price from DB on mount
   useEffect(() => {
@@ -51,6 +51,13 @@ const [instructions, setInstructions] = useState<{
     setError(null);
 
     try {
+
+      if (!user?.id) {
+        setError(t("booking.openViaBot"));
+        return;
+      }
+      const telegramId = user.id.toString();
+
       const createRes = await fetch("/api/booking/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,6 +166,12 @@ const [instructions, setInstructions] = useState<{
         <div className="mt-4 bg-red-900/40 border border-red-700 text-red-300 rounded-xl px-4 py-3 text-sm">
           {error}
         </div>
+      )}
+
+      {isReady && !user?.id && (
+        <p className="mt-3 text-center text-sm text-yellow-300">
+          {t("booking.openViaBot")}
+        </p>
       )}
 
       <button

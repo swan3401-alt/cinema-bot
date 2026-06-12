@@ -7,7 +7,13 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+
+    
     const { seatIds, movieId, telegramId, locale } = await req.json();
+
+    if (!/^\d+$/.test(String(telegramId)) && process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Invalid Telegram user" }, { status: 400 });
+    }
 
     if (!seatIds?.length || !movieId || !telegramId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

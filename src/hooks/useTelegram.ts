@@ -9,29 +9,27 @@ interface TelegramUser {
   username?: string;
   language_code?: string;
 }
-
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
-  initDataUnsafe?: {
-    user?: TelegramUser;
-  };
+  initDataUnsafe?: { user?: TelegramUser };
 }
 
-interface UseTelegramReturn {
-  user: TelegramUser | null;
-  isTelegram: boolean;
-  isReady: boolean;
-}
+const CACHE_KEY = "tg_user";
 
-export function useTelegram(): UseTelegramReturn {
+export function useTelegram() {
   const [user, setUser] = useState<TelegramUser | null>(null);
-  const [isTelegram, setIsTelegram] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // 1) Reuse a user captured earlier this session (survives hard reloads)
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) setUser(JSON.parse(cached));
+    } catch {}
+
     let attempts = 0;
-    const maxAttempts = 20;
+    const maxAttempts = 100; // ~10s, for slow networks/devices
 
     const interval = setInterval(() => {
       const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } })
@@ -39,15 +37,18 @@ export function useTelegram(): UseTelegramReturn {
       attempts++;
 
       if (tg) {
-        clearInterval(interval);
         tg.ready();
         tg.expand();
-        setIsTelegram(true);
-
-        const telegramUser = tg.initDataUnsafe?.user;
-        if (telegramUser) setUser(telegramUser);
-
-        setIsReady(true);
+        const u = tg.initDataUnsafe?.user;
+        if (u) {
+          setUser(u);
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(u)); } catch {}
+          clearInterval(interval);
+          setIsReady(true);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setIsReady(true); // gave up; user stays whatever the cache gave (maybe null)
+        }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
         setIsReady(true);
@@ -57,5 +58,5 @@ export function useTelegram(): UseTelegramReturn {
     return () => clearInterval(interval);
   }, []);
 
-  return { user, isTelegram, isReady };
+  return { user, isReady, isTelegram: user !== null };
 }
