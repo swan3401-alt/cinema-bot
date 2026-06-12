@@ -2,6 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useTelegram } from "@/hooks/useTelegram";
 
 const locales = [
   { code: "uz", label: "UZ" },
@@ -14,16 +15,22 @@ export default function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useTelegram();
 
   function switchLocale(next: string) {
+    // Persist to the shared preference so the bot uses it too (fire-and-forget)
+    if (user?.id) {
+      fetch("/api/user/locale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: user.id.toString(), locale: next }),
+      }).catch(() => {});
+    }
+
     const segments = pathname.split("/");
     segments[1] = next;
-
-    // Preserve query string (seatIds, movieId, bookingIds, etc.)
     const query = searchParams.toString();
-    const newPath = segments.join("/") + (query ? `?${query}` : "");
-
-    router.replace(newPath);
+    router.replace(segments.join("/") + (query ? `?${query}` : ""));
   }
 
   return (
