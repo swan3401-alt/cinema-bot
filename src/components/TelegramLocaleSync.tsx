@@ -34,7 +34,7 @@ export default function TelegramLocaleSync() {
         if (data.locale && SUPPORTED.includes(data.locale)) {
           target = data.locale; // stored preference wins
         } else {
-          // first time ever — seed the preference from Telegram's language
+          // first time ever - seed the preference from Telegram's language
           fetch("/api/user/locale", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
