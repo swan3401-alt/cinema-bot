@@ -10,11 +10,11 @@ export default function HomeButton() {
   return (
     <button
       onClick={() => router.push(`/${locale}`)}
-      className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm font-medium"
+      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-lg font-medium"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="w-4 h-4"
+        className="w-6 h-6"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

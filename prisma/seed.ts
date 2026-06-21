@@ -51,7 +51,6 @@ async function main() {
   }
 
 
-
   await prisma.seat.createMany({ data: seatData });
 
   console.log(`✅ Movie created: ${movie.title}`);

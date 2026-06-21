@@ -63,7 +63,7 @@
     "showAtEntrance": "Ushbu QR kodni kirish vaqtida ko'rsating."
   },
   "bot": {
-    "welcome": "Xush kelibsiz! Kino chiptalarini bron qilish uchun quyidagi tugmani bosing.",
+    "welcome": "Xush kelibsiz! Kino chiptalarini bron qilish uchun quyidagi tugmani bosing.\nP.S:\n/start - ilovani ochish\n/mytickets - chiptalaringizni ko'rish yoki bekor qilish\n/language - tilni o'zgartirish.",
     "bookButton": "🎬 Chipta bron qilish",
     "help": "/start - ilovani ochish, /mytickets - chiptalaringiz, /language - tilni o'zgartirish.",
     "receiptReceived": "✅ Chek qabul qilindi! Xodimlarimiz tez orada to'lovni tasdiqlaydi.",
@@ -113,6 +113,6 @@
     "transferInstruction": "Iltimos, {amount} UZS quyidagi kartaga o'tkazing:",
     "cardNumber": "Karta raqami",
     "cardHolder": "Karta egasi",
-    "sendReceipt": "O'tkazgandan so'ng, chek rasmini botga yuboring. Xodimlarimiz to'lovni tasdiqlab, chiptangizni yuboradi."
+    "sendReceipt": "O'tkazgandan so'ng, chek rasmini botga yuboring. Xodimlarimiz to'lovni tasdiqlab, chiptangizni yuboradi.\n\nBronlarni bekor qilish uchun iltimos mini ilovadagi \"Chiptalar\" tugmasidan YOKI botdagi /mytickets buyrug'idan foydalaning."
   }
 }

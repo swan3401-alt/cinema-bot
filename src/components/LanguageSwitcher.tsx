@@ -60,7 +60,12 @@ export default function LanguageSwitcher() {
         <button
           key={code}
           onClick={() => switchLocale(code)}
-          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+          // className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+          //   active === code
+          //     ? "bg-blue-600 text-white"
+          //     : "bg-gray-800 text-gray-400 hover:text-white"
+          // }`}
+          className={`px-4 py-2 rounded-xl text-base font-semibold transition-colors ${
             active === code
               ? "bg-blue-600 text-white"
               : "bg-gray-800 text-gray-400 hover:text-white"

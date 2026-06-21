@@ -63,7 +63,7 @@
     "showAtEntrance": "Show this QR code at the entrance."
   },
     "bot": {
-    "welcome": "Welcome! Tap the button below to book your cinema tickets.",
+    "welcome": "Welcome! Tap the button below to book your cinema tickets.\nP.S:\nUse /start to open the cinema booking app\n/mytickets to see your tickets or cancel them\n/language to change language.",
     "bookButton": "🎬 Book Tickets",
     "help": "Use /start to open the cinema booking app, /mytickets to see your tickets, /language to change language.",
     "receiptReceived": "✅ Receipt received! Our staff will confirm your payment shortly.",
@@ -113,6 +113,6 @@
     "transferInstruction": "Please transfer {amount} UZS to the card below:",
     "cardNumber": "Card number",
     "cardHolder": "Card holder",
-    "sendReceipt": "After transferring, send a photo of the receipt to the bot. Our staff will confirm your payment and send your ticket."
+    "sendReceipt": "After transferring, send a photo of the receipt to the bot. Our staff will confirm your payment and send your ticket.\n\nTo cancel reservations please use \"Tickets\" page in the mini app OR send /mytickets to the bot."
   }
 }

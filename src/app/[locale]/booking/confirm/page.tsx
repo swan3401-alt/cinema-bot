@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import BackButton from "@/components/BackButton";
 
 import { useTelegram } from "@/hooks/useTelegram";
 
@@ -159,6 +160,7 @@ const [instructions, setInstructions] = useState<{
 
   return (
     <main className="min-h-screen bg-gray-950 px-4 pt-6 pb-10 max-w-md mx-auto">
+      <BackButton href={`/${locale}/booking`} />
       <h1 className="text-white text-xl font-bold mb-6">{t("booking.orderSummary")}</h1>
 
       <div className="bg-gray-900 rounded-2xl p-5 flex flex-col gap-4">
