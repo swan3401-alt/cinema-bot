@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface TelegramUser {
   id: number;
@@ -16,6 +16,11 @@ interface TelegramWebApp {
 }
 
 const CACHE_KEY = "tg_user";
+
+const close = useCallback(() => {
+    (window as unknown as { Telegram?: { WebApp?: { close?: () => void } } })
+      .Telegram?.WebApp?.close?.();
+  }, []);
 
 export function useTelegram() {
   const [user, setUser] = useState<TelegramUser | null>(null);
@@ -58,5 +63,5 @@ export function useTelegram() {
     return () => clearInterval(interval);
   }, []);
 
-  return { user, isReady, isTelegram: user !== null };
+  return { user, isReady, isTelegram: user !== null, close };
 }

@@ -3,7 +3,8 @@
     "appName": "Cinema Ticket",
     "loading": "Loading...",
     "error": "Something went wrong",
-    "back": "Back"
+    "back": "Back",
+    "close": "Close"
   },
   "movie": {
     "date": "Date",

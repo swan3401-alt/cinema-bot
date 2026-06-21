@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useTelegram } from "@/hooks/useTelegram";
 
 export default function ConfirmPage() {
-  const { user, isTelegram, isReady } = useTelegram();
+  const { user, isReady, isTelegram, close } = useTelegram();
 
   const t = useTranslations();
   const locale = useLocale();
@@ -140,10 +140,19 @@ const [instructions, setInstructions] = useState<{
         </div>
         <button
           onClick={() => router.push(`/${locale}`)}
-          className="mt-6 w-full bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium py-3 rounded-xl"
+          className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 transition-colors"
         >
           {t("success.backHome")}
         </button>
+
+        {isTelegram && (
+          <button
+            onClick={close}
+            className="mt-3 w-full rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 font-medium py-3 transition-colors"
+          >
+            {t("common.close")}
+          </button>
+        )}
       </main>
     );
   }

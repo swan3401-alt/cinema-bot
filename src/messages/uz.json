@@ -3,7 +3,8 @@
     "appName": "Kino Chipta",
     "loading": "Yuklanmoqda...",
     "error": "Xatolik yuz berdi",
-    "back": "Orqaga"
+    "back": "Orqaga",
+    "close": "Yopish"
   },
   "movie": {
     "date": "Sana",
