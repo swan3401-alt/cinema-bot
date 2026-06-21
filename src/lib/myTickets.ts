@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { activeMovieCutoff } from "./movieAccess";
 
 export interface MyTicket {
   token: string;
@@ -16,6 +17,7 @@ export async function getMyTickets(telegramId: string): Promise<MyTicket[]> {
     where: {
       telegramId,
       status: { in: ["AWAITING_PAYMENT", "PAID", "USED"] },
+      movie: { date: { gte: activeMovieCutoff() } },
     },
     include: { seat: true, movie: true },
     orderBy: { createdAt: "desc" },

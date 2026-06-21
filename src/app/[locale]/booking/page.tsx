@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { buildSeatLayout } from "@/lib/seatLayout";
 import { activeBookingFilter } from "@/lib/availability";
+import { activeMovieCutoff } from "@/lib/movieAccess";
 import SeatMap from "@/components/SeatMap";
-import { getTranslations} from "next-intl/server";
 import BackButton from "@/components/BackButton";
-import { useLocale } from "next-intl";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +16,10 @@ export default async function BookingPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-
-
   const t = await getTranslations();
-  // const locale = useLocale();
-
 
   const movie = await prisma.movie.findFirst({
+    where: { date: { gte: activeMovieCutoff() } },
     orderBy: { date: "asc" },
     include: {
       seats: {

@@ -114,5 +114,9 @@
     "cardNumber": "Card number",
     "cardHolder": "Card holder",
     "sendReceipt": "After transferring, send a photo of the receipt to the bot. Our staff will confirm your payment and send your ticket.\n\nTo cancel reservations please use \"Tickets\" page in the mini app OR send /mytickets to the bot."
+  },
+  "home": { 
+    "noMovies": "No movies scheduled", 
+    "noMoviesHint": "Check back soon for upcoming showings." 
   }
 }

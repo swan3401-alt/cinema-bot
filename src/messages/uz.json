@@ -114,5 +114,9 @@
     "cardNumber": "Karta raqami",
     "cardHolder": "Karta egasi",
     "sendReceipt": "O'tkazgandan so'ng, chek rasmini botga yuboring. Xodimlarimiz to'lovni tasdiqlab, chiptangizni yuboradi.\n\nBronlarni bekor qilish uchun iltimos mini ilovadagi \"Chiptalar\" tugmasidan YOKI botdagi /mytickets buyrug'idan foydalaning."
+  },
+  "home": { 
+    "noMovies": "Rejalashtirilgan kinolar yo'q", 
+    "noMoviesHint": "Tez orada yangi seanslar uchun qayta tashrif buyuring." 
   }
 }
