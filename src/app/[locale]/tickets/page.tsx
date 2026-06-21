@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useTelegram } from "@/hooks/useTelegram";
 
 interface Ticket {
   token: string;
-  status: string;
+  status: "AWAITING_PAYMENT" | "PAID" | "USED";
   movieTitle: string;
   date: string;
   time: string;
@@ -17,61 +17,123 @@ interface Ticket {
 
 export default function TicketsPage() {
   const t = useTranslations();
-  const locale = useLocale();
   const { user, isReady } = useTelegram();
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [notified, setNotified] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/my-tickets?telegramId=${user.id}`);
+      const data = await res.json();
+      setTickets(data.tickets ?? []);
+    } catch {
+      setTickets([]);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!isReady) return;
-    const telegramId = user?.id?.toString() ?? "preview_user";
-    fetch(`/api/my-tickets?telegramId=${telegramId}`)
-      .then((r) => r.json())
-      .then((d) => setTickets(d.tickets ?? []))
-      .catch(() => setTickets([]));
-  }, [isReady, user]);
+    if (isReady && user?.id) load();
+  }, [isReady, user?.id, load]);
 
-  const statusStyles: Record<string, string> = {
-    AWAITING_PAYMENT: "bg-yellow-900/40 text-yellow-300",
-    PAID: "bg-green-900/40 text-green-300",
-    USED: "bg-gray-800 text-gray-400",
+  async function cancel(token: string) {
+    if (!user?.id) return;
+    setBusy(token);
+    setError(null);
+    try {
+      const res = await fetch("/api/booking/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: user.id.toString(), token }),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        setTickets((prev) => prev?.filter((x) => x.token !== token) ?? null);
+      } else if (result.reason === "paid") {
+        setNotified((prev) => new Set(prev).add(token));
+      } else {
+        setError(t("tickets.cancelError"));
+        await load();
+      }
+    } catch {
+      setError(t("tickets.cancelError"));
+    } finally {
+      setBusy(null);
+      setConfirming(null);
+    }
+  }
+
+  const statusText: Record<string, string> = {
+    AWAITING_PAYMENT: t("tickets.awaiting"),
+    PAID: t("tickets.confirmed"),
+    USED: t("tickets.used"),
   };
-  const statusKey: Record<string, string> = {
-    AWAITING_PAYMENT: "tickets.awaiting",
-    PAID: "tickets.confirmed",
-    USED: "tickets.used",
-  };
+
+  if (!isReady || tickets === null) {
+    return <main className="min-h-screen bg-gray-950 px-5 py-6 text-gray-300">{t("common.loading")}</main>;
+  }
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 pt-4 pb-10 max-w-md mx-auto">
-      <h1 className="text-white text-xl font-bold mb-4">{t("tickets.title")}</h1>
+    <main className="min-h-screen bg-gray-950 px-5 py-6">
+      <h1 className="mb-5 text-2xl font-bold text-white">{t("tickets.title")}</h1>
 
-      {tickets === null ? (
-        <p className="text-gray-500">{t("common.loading")}</p>
-      ) : tickets.length === 0 ? (
-        <p className="text-gray-500">{t("tickets.empty")}</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {tickets.map((tk) => {
-            const dateStr = new Date(tk.date).toLocaleDateString(locale, {
-              day: "numeric", month: "long", year: "numeric",
-            });
-            return (
-              <div key={tk.token} className="bg-gray-900 rounded-2xl p-4 flex flex-col gap-2">
-                <div className="flex justify-between items-start">
-                  <span className="text-white font-semibold">{tk.movieTitle}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${statusStyles[tk.status] ?? ""}`}>
-                    {t(statusKey[tk.status] ?? "tickets.confirmed")}
-                  </span>
-                </div>
-                <p className="text-gray-400 text-sm">{dateStr} · {tk.time}</p>
-                <p className="text-gray-400 text-sm">
-                  {tk.hall} · {t("booking.row")} {tk.row}, {t("booking.seat")} {tk.number}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {tickets.length === 0 && <p className="text-gray-400">{t("tickets.empty")}</p>}
+
+      <div className="flex flex-col gap-4">
+        {tickets.map((tk) => {
+          const dateStr = new Intl.DateTimeFormat(undefined, {
+            day: "numeric", month: "long", year: "numeric",
+          }).format(new Date(tk.date));
+
+          return (
+            <div key={tk.token} className="rounded-2xl border border-white/10 bg-gray-900/60 p-4">
+              <span className="text-xs uppercase tracking-wide text-gray-400">{statusText[tk.status]}</span>
+              <p className="mt-1 font-semibold text-white">{tk.movieTitle}</p>
+              <p className="text-sm text-gray-300">{dateStr} · {tk.time}</p>
+              <p className="text-sm text-gray-300">{tk.hall}</p>
+              <p className="mb-3 text-sm text-gray-300">
+                {t("booking.row")} {tk.row}, {t("booking.seat")} {tk.number}
+              </p>
+
+              {tk.status === "AWAITING_PAYMENT" &&
+                (confirming === tk.token ? (
+                  <button
+                    onClick={() => cancel(tk.token)}
+                    disabled={busy === tk.token}
+                    className="w-full rounded-xl bg-red-600 py-2.5 font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-60"
+                  >
+                    {busy === tk.token ? t("tickets.cancelling") : t("tickets.confirmCancel")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setConfirming(tk.token)}
+                    className="w-full rounded-xl border border-red-500/40 py-2.5 font-medium text-red-300 transition-colors hover:bg-red-500/10"
+                  >
+                    {t("tickets.cancel")}
+                  </button>
+                ))}
+
+              {tk.status === "PAID" &&
+                (notified.has(tk.token) ? (
+                  <p className="text-sm text-yellow-300">{t("tickets.staffNotified")}</p>
+                ) : (
+                  <button
+                    onClick={() => cancel(tk.token)}
+                    disabled={busy === tk.token}
+                    className="w-full rounded-xl border border-white/15 py-2.5 font-medium text-gray-200 transition-colors hover:bg-white/5 disabled:opacity-60"
+                  >
+                    {busy === tk.token ? t("tickets.cancelling") : t("tickets.requestCancel")}
+                  </button>
+                ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
     </main>
   );
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendBotMessage } from "@/lib/telegram";
 import { buildKeyboardMarkup } from "@/bot/keyboard";
 import { tr } from "@/bot/i18n";
 
@@ -29,18 +31,15 @@ export async function POST(req: NextRequest) {
       update: { locale },
     });
 
-    // Push a relabeled keyboard so the bot reflects the change immediately
-    const token = process.env.BOT_TOKEN;
-    if (notify && token) {
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: String(telegramId),
-          text: tr(locale, "bot.languageSet"),
-          reply_markup: buildKeyboardMarkup(locale),
-        }),
-      }).catch(() => {});
+    // Relabel the keyboard via the retry-backed sender, after the response is sent
+    if (notify) {
+      after(async () => {
+        await sendBotMessage(
+          String(telegramId),
+          tr(locale as "uz" | "ru" | "en", "bot.languageSet"),
+          buildKeyboardMarkup(locale as "uz" | "ru" | "en")
+        );
+      });
     }
 
     return NextResponse.json({ ok: true });

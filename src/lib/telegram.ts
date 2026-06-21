@@ -135,3 +135,17 @@ export async function sendPaymentInstructions(params: {
 
   return telegramApi("sendMessage", () => ({ chat_id: params.telegramId, text }));
 }
+
+/** Generic text message with optional reply markup, routed through the retry wrapper. */
+export async function sendBotMessage(
+  chatId: string,
+  text: string,
+  replyMarkup?: Record<string, unknown>
+): Promise<boolean> {
+  if (!/^\d+$/.test(chatId)) return false;
+  return telegramApi("sendMessage", () => ({
+    chat_id: chatId,
+    text,
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+  }));
+}

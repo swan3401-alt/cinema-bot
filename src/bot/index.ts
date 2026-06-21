@@ -6,6 +6,7 @@ import { resolveLocale, tr, type Locale } from "./i18n";
 import { getMyTickets } from "@/lib/myTickets";
 import { sendTicketToChat } from "@/lib/telegram";
 import { nanoid } from "nanoid";
+import { cancelBooking } from "@/lib/cancelBooking";
 
 import { buildKeyboardMarkup } from "./keyboard";
 
@@ -104,7 +105,94 @@ bot.callbackQuery(/^setlang:(uz|ru|en)$/, async (ctx) => {
 bot.command("mytickets", async (ctx) => {
   const telegramId = ctx.from!.id.toString();
   const locale = await resolveLocale(telegramId, ctx.from?.language_code);
-  await sendMyTickets(ctx, telegramId, locale);
+  const { text, keyboard } = await renderTicketList(telegramId, locale);
+  await ctx.reply(text, { reply_markup: keyboard });
+});
+
+// Send all QR codes (PAID tickets only)
+bot.callbackQuery("tkt_all", async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+  const tickets = await getMyTickets(telegramId);
+  const paid = tickets.filter((t) => t.status === "PAID");
+  await ctx.answerCallbackQuery(paid.length ? tr(locale, "tickets.sendingQr") : tr(locale, "tickets.noPaidQr"));
+  for (const tk of paid) {
+    await sendTicketToChat({
+      token: tk.token, telegramId, locale,
+      seat: { row: tk.row, number: tk.number },
+      movie: { title: tk.movieTitle, date: tk.date, time: tk.time, hall: tk.hall },
+    });
+  }
+});
+
+// View one ticket
+bot.callbackQuery(/^tkt_v:(.+)$/, async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+  const { text, keyboard } = await renderTicketDetail(ctx.match[1], telegramId, locale);
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(text, { reply_markup: keyboard });
+});
+
+// Back to list
+bot.callbackQuery("tkt_b", async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+  const { text, keyboard } = await renderTicketList(telegramId, locale);
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(text, { reply_markup: keyboard });
+});
+
+// Cancel pressed → confirmation step (text/buttons depend on status)
+bot.callbackQuery(/^tkt_c:(.+)$/, async (ctx) => {
+  const token = ctx.match[1];
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+  await ctx.answerCallbackQuery();
+
+  const tk = (await getMyTickets(telegramId)).find((t) => t.token === token);
+  if (!tk) {
+    const { text, keyboard } = await renderTicketList(telegramId, locale);
+    await ctx.editMessageText(text, { reply_markup: keyboard });
+    return;
+  }
+
+  const isPaid = tk.status === "PAID";
+  const kb = new InlineKeyboard()
+    .text(tr(locale, isPaid ? "tickets.confirmNotifyBtn" : "tickets.confirmCancelBtn"), `tkt_cc:${token}`)
+    .text(tr(locale, "tickets.back"), `tkt_v:${token}`);
+  const prompt = tr(locale, isPaid ? "tickets.paidConfirmPrompt" : "tickets.cancelConfirmPrompt");
+  await ctx.editMessageText(prompt, { reply_markup: kb });
+});
+
+// Confirmed → perform cancellation
+bot.callbackQuery(/^tkt_cc:(.+)$/, async (ctx) => {
+  const token = ctx.match[1];
+  const telegramId = ctx.from.id.toString();
+  const locale = await resolveLocale(telegramId, ctx.from.language_code);
+  const actor = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name;
+
+  const result = await cancelBooking(token, telegramId, actor);
+  const back = new InlineKeyboard().text(tr(locale, "tickets.back"), "tkt_b");
+
+  if (result.ok) {
+    await ctx.answerCallbackQuery(tr(locale, "tickets.cancelledToast"));
+    await ctx.editMessageText(
+      tr(locale, "tickets.cancelledMsg", { seat: `R${result.freed.row}·${result.freed.number}` }),
+      { reply_markup: back }
+    );
+  } else if (result.reason === "paid") {
+    await ctx.answerCallbackQuery();
+    const contact = process.env.STAFF_CONTACT;
+    await ctx.editMessageText(
+      contact ? tr(locale, "tickets.paidNotifiedContact", { contact }) : tr(locale, "tickets.paidNotified"),
+      { reply_markup: back }
+    );
+  } else {
+    await ctx.answerCallbackQuery(tr(locale, "tickets.cancelFailed"));
+    const { text, keyboard } = await renderTicketList(telegramId, locale);
+    await ctx.editMessageText(text, { reply_markup: keyboard });
+  }
 });
 
 
@@ -277,7 +365,8 @@ bot.on("message:text", async (ctx, next) => {
   const locale = await resolveLocale(telegramId, ctx.from.language_code);
 
   if (TICKETS_LABELS.has(text)) {
-    await sendMyTickets(ctx, telegramId, locale);
+    const { text: listText, keyboard } = await renderTicketList(telegramId, locale);
+    await ctx.reply(listText, { reply_markup: keyboard });
     return;
   }
   if (LANGUAGE_LABELS.has(text)) {
@@ -288,3 +377,63 @@ bot.on("message:text", async (ctx, next) => {
   return next(); // anything else falls through
 });
 
+
+// Ticket cancellation helpers
+
+type Ticket = Awaited<ReturnType<typeof getMyTickets>>[number];
+
+function ticketStatusLabel(locale: Locale, status: string): string {
+  const map: Record<string, string> = {
+    AWAITING_PAYMENT: tr(locale, "bot.statusAwaiting"),
+    PAID: tr(locale, "bot.statusPaid"),
+    USED: tr(locale, "bot.statusUsed"),
+  };
+  return map[status] ?? status;
+}
+
+function ticketLine(locale: Locale, tk: Ticket, n?: number): string {
+  const dateStr = new Intl.DateTimeFormat(locale, {
+    day: "numeric", month: "long", year: "numeric",
+  }).format(tk.date);
+  const head = n ? `${n}. ` : "";
+  return `${head}${ticketStatusLabel(locale, tk.status)}\n🎬 ${tk.movieTitle}\n📅 ${dateStr} · ${tk.time}\n🏛 ${tk.hall}\n💺 ${tr(locale, "booking.row")} ${tk.row}, ${tr(locale, "booking.seat")} ${tk.number}`;
+}
+
+async function renderTicketList(telegramId: string, locale: Locale) {
+  const tickets = await getMyTickets(telegramId);
+  const kb = new InlineKeyboard();
+
+  if (tickets.length === 0) {
+    return { text: tr(locale, "bot.noTickets"), keyboard: kb };
+  }
+
+  const lines = tickets.map((tk, i) => ticketLine(locale, tk, i + 1));
+  const text = `${tr(locale, "bot.myTicketsTitle")}\n\n${lines.join("\n\n")}`;
+
+  if (tickets.some((t) => t.status === "PAID")) {
+    kb.text(tr(locale, "tickets.sendAllQr"), "tkt_all").row();
+  }
+  tickets.forEach((tk, i) => {
+    kb.text(`#${i + 1} · R${tk.row}·${tk.number}`, `tkt_v:${tk.token}`);
+    if (i % 2 === 1) kb.row();
+  });
+
+  return { text, keyboard: kb };
+}
+
+async function renderTicketDetail(token: string, telegramId: string, locale: Locale) {
+  const tickets = await getMyTickets(telegramId);
+  const idx = tickets.findIndex((t) => t.token === token);
+  if (idx === -1) return renderTicketList(telegramId, locale);
+
+  const tk = tickets[idx];
+  const text = `${tr(locale, "bot.myTicketsTitle")} — #${idx + 1}\n\n${ticketLine(locale, tk)}`;
+
+  const kb = new InlineKeyboard();
+  if (tk.status === "USED") {
+    kb.text(tr(locale, "tickets.back"), "tkt_b");
+  } else {
+    kb.text(tr(locale, "tickets.cancel"), `tkt_c:${tk.token}`).text(tr(locale, "tickets.back"), "tkt_b");
+  }
+  return { text, keyboard: kb };
+}
