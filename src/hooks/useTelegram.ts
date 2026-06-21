@@ -17,14 +17,15 @@ interface TelegramWebApp {
 
 const CACHE_KEY = "tg_user";
 
-const close = useCallback(() => {
-    (window as unknown as { Telegram?: { WebApp?: { close?: () => void } } })
-      .Telegram?.WebApp?.close?.();
-  }, []);
 
 export function useTelegram() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isReady, setIsReady] = useState(false);
+
+  const close = useCallback(() => {
+    (window as unknown as { Telegram?: { WebApp?: { close?: () => void } } })
+      .Telegram?.WebApp?.close?.();
+  }, []);
 
   useEffect(() => {
     // 1) Reuse a user captured earlier this session (survives hard reloads)
