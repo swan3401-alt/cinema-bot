@@ -1,6 +1,9 @@
 import { prisma } from "./prisma";
 import { sendBotMessage } from "./telegram";
 
+
+
+
 export type CancelResult =
   | { ok: true; freed: { row: number; number: number; movieTitle: string } }
   | { ok: false; reason: "paid" | "used" | "already" | "not_found" };
@@ -25,12 +28,18 @@ export async function cancelBooking(
   const who = actorLabel ? `${actorLabel} (id ${telegramId})` : `id ${telegramId}`;
   const seatStr = `R${booking.seat.row}·${booking.seat.number}`;
 
+  // Inline button staff taps once they've handled the refund
+  const approveMarkup = {
+    inline_keyboard: [[{ text: "✅ Approve cancellation", callback_data: `cxl_ok:${token}` }]],
+  };
+
   // PAID - user can't self-cancel; notify staff to handle it
   if (booking.status === "PAID") {
     if (staffGroupId) {
       await sendBotMessage(
         staffGroupId,
-        `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}\nPlease contact the customer to process it.`
+        `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}\nApprove below once handled.`,
+        approveMarkup
       );
     }
     return { ok: false, reason: "paid" };
@@ -48,7 +57,8 @@ export async function cancelBooking(
       if (staffGroupId) {
         await sendBotMessage(
           staffGroupId,
-          `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}`
+          `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}`,
+          approveMarkup
         );
       }
       return { ok: false, reason: "paid" };

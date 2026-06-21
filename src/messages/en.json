@@ -105,7 +105,8 @@
     "sendingQr": "Sending your QR-codes…",
     "noPaidQr": "No confirmed tickets to send.",
     "requestCancel": "Request cancellation",
-    "staffNotified": "Staff notified - they'll contact you."
+    "staffNotified": "Staff notified - they'll contact you.",
+    "paidCancelApproved": "✅ Your paid ticket has been cancelled and seat {seat} released. If a refund applies, our staff will arrange it."
   },
   "payment": {
     "title": "Payment",

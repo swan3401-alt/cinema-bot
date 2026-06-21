@@ -105,7 +105,8 @@
     "sendingQr": "QR-kodlaringiz yuborilmoqda…",
     "noPaidQr": "Yuborish uchun tasdiqlangan chiptalar yo'q.",
     "requestCancel": "Bekor qilishni so'rash",
-    "staffNotified": "Xodimlarga xabar berildi - ular siz bilan bog'lanadi."
+    "staffNotified": "Xodimlarga xabar berildi - ular siz bilan bog'lanadi.",
+    "paidCancelApproved": "✅ To'langan chiptangiz bekor qilindi va {seat} joyi bo'shatildi. Agar to'lovni qaytarish kerak bo'lsa, xodimlarimiz buni hal qiladi."
   },
   "payment": {
     "title": "To'lov",

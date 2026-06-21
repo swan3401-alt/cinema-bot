@@ -7,6 +7,7 @@ import { getMyTickets } from "@/lib/myTickets";
 import { sendTicketToChat } from "@/lib/telegram";
 import { nanoid } from "nanoid";
 import { cancelBooking } from "@/lib/cancelBooking";
+import { sendBotMessage } from "@/lib/telegram";
 
 import { buildKeyboardMarkup } from "./keyboard";
 
@@ -261,6 +262,54 @@ bot.callbackQuery(/^tkt_cc:(.+)$/, async (ctx) => {
     const { text, keyboard } = await renderTicketList(telegramId, locale);
     await ctx.editMessageText(text, { reply_markup: keyboard });
   }
+});
+
+
+
+bot.callbackQuery(/^cxl_ok:(.+)$/, async (ctx) => {
+  const token = ctx.match[1];
+
+  const booking = await prisma.booking.findUnique({
+    where: { token },
+    include: { seat: true, movie: true },
+  });
+  if (!booking) {
+    await ctx.answerCallbackQuery("Booking not found");
+    return;
+  }
+
+  // Only cancel if it's still PAID (guards double-taps / races)
+  const result = await prisma.booking.updateMany({
+    where: { token, status: "PAID" },
+    data: { status: "CANCELLED" },
+  });
+
+  const original = ctx.callbackQuery.message?.text ?? "";
+
+  if (result.count === 0) {
+    await ctx.answerCallbackQuery("Already handled");
+    await ctx
+      .editMessageText(`${original}\n\n☑️ Already handled`, { reply_markup: { inline_keyboard: [] } })
+      .catch(() => {});
+    return;
+  }
+
+  await ctx.answerCallbackQuery("Cancellation approved");
+
+  // Tell the customer (in their language)
+  const locale = await resolveLocale(booking.telegramId);
+  await sendBotMessage(
+    booking.telegramId,
+    tr(locale, "tickets.paidCancelApproved", { seat: `R${booking.seat.row}·${booking.seat.number}` })
+  );
+
+  // Update the staff message and drop the button
+  await ctx
+    .editMessageText(
+      `${original}\n\n✅ Cancellation approved by ${ctx.from.first_name} — seat R${booking.seat.row}·${booking.seat.number} freed`,
+      { reply_markup: { inline_keyboard: [] } }
+    )
+    .catch(() => {});
 });
 
 
