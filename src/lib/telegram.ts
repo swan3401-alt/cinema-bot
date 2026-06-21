@@ -142,7 +142,7 @@ export async function sendBotMessage(
   text: string,
   replyMarkup?: Record<string, unknown>
 ): Promise<boolean> {
-  if (!/^\d+$/.test(chatId)) return false;
+  if (!/^-?\d+$/.test(chatId)) return false;
   return telegramApi("sendMessage", () => ({
     chat_id: chatId,
     text,
