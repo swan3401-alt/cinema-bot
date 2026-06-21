@@ -99,14 +99,14 @@
     "cancelledToast": "Chipta bekor qilindi",
     "cancelledMsg": "✅ Bandlovingiz bekor qilindi.\nBo'shatilgan joy: {seat}",
     "paidNotified": "📨 Xodimlarimizga xabar berildi va ular to'langan chiptangiz bo'yicha siz bilan bog'lanadi.",
-    "paidNotifiedContact": "📨 Xodimlarimizga xabar berildi va ular siz bilan bog'lanadi. Bizga ham murojaat qilishingiz mumkin: {contact}",
+    "paidNotifiedContact": "📨 Xodimlarimizga xabar berildi, iltimos bizga murojaat qiling: {contact}",
     "cancelFailed": "Ushbu chiptani bekor qilib bo'lmadi.",
     "cancelError": "Bekor qilib bo'lmadi. Qayta urinib ko'ring.",
     "sendingQr": "QR-kodlaringiz yuborilmoqda…",
     "noPaidQr": "Yuborish uchun tasdiqlangan chiptalar yo'q.",
     "requestCancel": "Bekor qilishni so'rash",
     "staffNotified": "Xodimlarga xabar berildi - ular siz bilan bog'lanadi.",
-    "paidCancelApproved": "✅ To'langan chiptangiz bekor qilindi va {seat} joyi bo'shatildi. Agar to'lovni qaytarish kerak bo'lsa, xodimlarimiz buni hal qiladi."
+    "paidCancelApproved": "✅ To'langan chiptangiz bekor qilindi va {seat} joyi bo'shatildi."
   },
   "payment": {
     "title": "To'lov",

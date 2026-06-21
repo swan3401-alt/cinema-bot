@@ -99,14 +99,14 @@
     "cancelledToast": "Ticket cancelled",
     "cancelledMsg": "✅ Your reservation has been cancelled.\nFreed seat: {seat}",
     "paidNotified": "📨 Our staff have been notified and will contact you about your paid ticket.",
-    "paidNotifiedContact": "📨 Our staff have been notified and will contact you. You can also reach us: {contact}",
+    "paidNotifiedContact": "📨 Our staff have been notified Please reach out: {contact}",
     "cancelFailed": "Couldn't cancel this ticket.",
     "cancelError": "Couldn't cancel. Please try again.",
     "sendingQr": "Sending your QR-codes…",
     "noPaidQr": "No confirmed tickets to send.",
     "requestCancel": "Request cancellation",
     "staffNotified": "Staff notified - they'll contact you.",
-    "paidCancelApproved": "✅ Your paid ticket has been cancelled and seat {seat} released. If a refund applies, our staff will arrange it."
+    "paidCancelApproved": "✅ Your paid ticket has been cancelled and seat {seat} released."
   },
   "payment": {
     "title": "Payment",

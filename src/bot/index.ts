@@ -306,7 +306,7 @@ bot.callbackQuery(/^cxl_ok:(.+)$/, async (ctx) => {
   // Update the staff message and drop the button
   await ctx
     .editMessageText(
-      `${original}\n\n✅ Cancellation approved by ${ctx.from.first_name} — seat R${booking.seat.row}·${booking.seat.number} freed`,
+      `${original}\n\n✅ Cancellation approved by ${ctx.from.first_name} - seat R${booking.seat.row}·${booking.seat.number} freed`,
       { reply_markup: { inline_keyboard: [] } }
     )
     .catch(() => {});
