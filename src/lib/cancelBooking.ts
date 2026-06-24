@@ -15,7 +15,7 @@ export async function cancelBooking(
 ): Promise<CancelResult> {
   const booking = await prisma.booking.findFirst({
     where: { token, telegramId },
-    include: { seat: true, movie: true },
+    include: { seat: true, session: { include: { movie: true } } },
   });
 
   if (!booking) return { ok: false, reason: "not_found" };
@@ -38,7 +38,7 @@ export async function cancelBooking(
     if (staffGroupId) {
       await sendBotMessage(
         staffGroupId,
-        `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}\nApprove below once handled.`,
+        `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.session.movie.title}\n💺 Seat ${seatStr}\nApprove below once handled.`,
         approveMarkup
       );
     }
@@ -57,7 +57,7 @@ export async function cancelBooking(
       if (staffGroupId) {
         await sendBotMessage(
           staffGroupId,
-          `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Seat ${seatStr}`,
+          `💸 Paid-ticket cancellation requested\n👤 ${who}\n🎬 ${booking.session.movie.title}\n💺 Seat ${seatStr}`,
           approveMarkup
         );
       }
@@ -69,12 +69,12 @@ export async function cancelBooking(
   if (staffGroupId) {
     await sendBotMessage(
       staffGroupId,
-      `🚫 Reservation cancelled by user\n👤 ${who}\n🎬 ${booking.movie.title}\n💺 Freed seat: ${seatStr}`
+      `🚫 Reservation cancelled by user\n👤 ${who}\n🎬 ${booking.session.movie.title}\n💺 Freed seat: ${seatStr}`
     );
   }
 
   return {
     ok: true,
-    freed: { row: booking.seat.row, number: booking.seat.number, movieTitle: booking.movie.title },
+    freed: { row: booking.seat.row, number: booking.seat.number, movieTitle: booking.session.movie.title },
   };
 }

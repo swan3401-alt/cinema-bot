@@ -1,35 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { activeMovieCutoff } from "./movieAccess";
+import { activeMovieCutoff } from "@/lib/movieAccess";
 
-export interface MyTicket {
-  token: string;
-  status: string;
-  movieTitle: string;
-  date: Date;
-  time: string;
-  hall: string;
-  row: number;
-  number: number;
-}
-
-export async function getMyTickets(telegramId: string): Promise<MyTicket[]> {
+export async function getMyTickets(telegramId: string) {
   const bookings = await prisma.booking.findMany({
     where: {
       telegramId,
       status: { in: ["AWAITING_PAYMENT", "PAID", "USED"] },
-      movie: { date: { gte: activeMovieCutoff() } },
+      session: { date: { gte: activeMovieCutoff() } },
     },
-    include: { seat: true, movie: true },
+    include: { seat: true, session: { include: { movie: true, hall: true } } },
     orderBy: { createdAt: "desc" },
   });
 
   return bookings.map((b) => ({
     token: b.token,
     status: b.status,
-    movieTitle: b.movie.title,
-    date: b.movie.date,
-    time: b.movie.time,
-    hall: b.movie.hall,
+    movieTitle: b.session.movie.title,
+    date: b.session.date,
+    time: b.session.time,
+    hall: b.session.hall.name,
     row: b.seat.row,
     number: b.seat.number,
   }));

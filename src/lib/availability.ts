@@ -38,9 +38,9 @@ export async function sweepExpiredBookings(seatIds?: string[]): Promise<number> 
 }
 
 /** Returns the set of seat IDs that are currently taken, from a given list. */
-export async function getTakenSeatIds(seatIds: string[]): Promise<Set<string>> {
+export async function getTakenSeatIds(seatIds: string[], sessionId: string): Promise<Set<string>> {
   const active = await prisma.booking.findMany({
-    where: { seatId: { in: seatIds }, ...activeBookingFilter() },
+    where: { seatId: { in: seatIds }, sessionId, ...activeBookingFilter() },
     select: { seatId: true },
   });
   return new Set(active.map((b) => b.seatId));

@@ -7,13 +7,9 @@ import { Seat, SeatStatus } from "@/types";
 import { SeatRow } from "@/lib/seatLayout";
 import SeatButton from "./SeatButton";
 
-interface Props {
-  rows: SeatRow[];
-  price: number;
-  movieId: string;
-}
+interface Props { rows: SeatRow[]; price: number; sessionId: string; }
 
-export default function SeatMap({ rows, price, movieId }: Props) {
+export default function SeatMap({ rows, price, sessionId }: Props) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
@@ -37,7 +33,7 @@ export default function SeatMap({ rows, price, movieId }: Props) {
   function handleConfirm() {
     if (selectedSeats.length === 0) return;
     const seatIds = selectedSeats.map((s) => s.id).join(",");
-    router.push(`/${locale}/booking/confirm?seatIds=${seatIds}&movieId=${movieId}`);
+    router.push(`/${locale}/booking/confirm?seatIds=${seatIds}&sessionId=${sessionId}`);
   }
 
   const totalPrice = price * selectedSeats.length;

@@ -1,18 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { sendTicketToChat } from "@/lib/telegram";
 
-/**
- * Confirms a set of bookings: marks them PAID and sends QR tickets.
- * Used by manual staff approval now, and by the Click webhook later.
- * Idempotent: only acts on bookings not already PAID.
- */
 export async function confirmBookings(
   bookingIds: string[],
   paymentRef: string
 ): Promise<{ confirmed: number; delivered: number }> {
   const toConfirm = await prisma.booking.findMany({
     where: { id: { in: bookingIds }, status: { in: ["AWAITING_PAYMENT", "PENDING"] } },
-    include: { seat: true, movie: true },
+    include: { seat: true, session: { include: { movie: true, hall: true } } },
   });
 
   if (toConfirm.length === 0) return { confirmed: 0, delivered: 0 };
@@ -29,7 +24,12 @@ export async function confirmBookings(
       telegramId: b.telegramId,
       locale: b.locale,
       seat: { row: b.seat.row, number: b.seat.number },
-      movie: { title: b.movie.title, date: b.movie.date, time: b.movie.time, hall: b.movie.hall },
+      movie: {
+        title: b.session.movie.title,
+        date: b.session.date,
+        time: b.session.time,
+        hall: b.session.hall.name,
+      },
     });
     if (ok) delivered++;
   }
@@ -37,7 +37,6 @@ export async function confirmBookings(
   return { confirmed: toConfirm.length, delivered };
 }
 
-/** Rejects/cancels bookings and frees the seats. */
 export async function rejectBookings(bookingIds: string[]): Promise<void> {
   await prisma.booking.updateMany({
     where: { id: { in: bookingIds }, status: { in: ["AWAITING_PAYMENT", "PENDING"] } },

@@ -325,7 +325,7 @@ bot.on("message:photo", async (ctx) => {
 
   const awaiting = await prisma.booking.findMany({
     where: { telegramId, status: "AWAITING_PAYMENT" },
-    include: { seat: true, movie: true },
+    include: { seat: true, session: { include: { movie: true } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -346,8 +346,7 @@ bot.on("message:photo", async (ctx) => {
   });
 
   const seatList = awaiting.map((b) => `R${b.seat.row}·${b.seat.number}`).join(", ");
-  const total = (awaiting[0].movie.price * awaiting.length)
-    .toLocaleString("en-US").replace(/,/g, " ");
+  const total = (awaiting[0].session.price * awaiting.length).toLocaleString("en-US").replace(/,/g, " ");
   const customer = ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name;
 
   const keyboard = new InlineKeyboard()
@@ -359,7 +358,7 @@ bot.on("message:photo", async (ctx) => {
     caption:
       `🧾 Payment receipt\n\n` +
       `👤 ${customer} (id ${telegramId})\n` +
-      `🎬 ${awaiting[0].movie.title}\n` +
+      `🎬 ${awaiting[0].session.movie.title}\n` +
       `💺 ${seatList}\n` +
       `💰 ${total} UZS`,
     reply_markup: keyboard,

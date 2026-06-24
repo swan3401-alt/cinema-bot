@@ -1,26 +1,25 @@
 import { prisma } from "@/lib/prisma";
-import MovieCard from "@/components/MovieCard";
-import { notFound } from "next/navigation";
-import { activeBookingFilter } from "@/lib/availability";
 import { getTranslations } from "next-intl/server";
+import MovieCarousel, { type SessionView } from "@/components/MovieCarousel";
+import { activeBookingFilter } from "@/lib/availability";
 import { activeMovieCutoff } from "@/lib/movieAccess";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const movie = await prisma.movie.findFirst({
+
+  const sessions = await prisma.session.findMany({
     where: { date: { gte: activeMovieCutoff() } },
-    orderBy: { date: "asc" },
-    include: { _count: { select: { bookings: { where: activeBookingFilter() } } } },
+    orderBy: [{ date: "asc" }, { time: "asc" }],
+    include: {
+      movie: true,
+      hall: { include: { _count: { select: { seats: true } } } },
+      _count: { select: { bookings: { where: activeBookingFilter() } } },
+    },
   });
 
-
-  if (!movie) {
+  if (sessions.length === 0) {
     const t = await getTranslations({ locale, namespace: "home" });
     return (
       <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 text-center">
@@ -33,17 +32,27 @@ export default async function Home({
     );
   }
 
-  const availableSeats = movie.totalSeats - movie._count.bookings;
-  const formattedDate = movie.date.toLocaleDateString(locale, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // Build view-models; format the date server-side (avoids hydration mismatch)
+  const views: SessionView[] = sessions.map((s) => ({
+    sessionId: s.id,
+    title: s.movie.title,
+    description: s.movie.description,
+    posterUrl: s.movie.posterUrl,
+    time: s.time,
+    hall: s.hall.name,
+    price: s.price,
+    availableSeats: s.hall._count.seats - s._count.bookings,
+    dateLabel: s.date.toLocaleDateString(locale, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+  }));
 
   return (
     <main className="bg-gray-950">
-      <MovieCard movie={movie} availableSeats={availableSeats} formattedDate={formattedDate} />
+      <MovieCarousel sessions={views} />
     </main>
   );
 }

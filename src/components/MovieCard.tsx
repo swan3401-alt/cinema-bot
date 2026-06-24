@@ -7,12 +7,13 @@ import { useEffect, useState } from "react";
 import { Movie } from "@/types";
 
 interface Props {
-  movie: Omit<Movie, "seats">;
+  sessionId: string;
+  movie: { title: string; description: string; posterUrl: string; time: string; hall: string; price: number };
   availableSeats: number;
   formattedDate: string;
 }
 
-export default function MovieCard({ movie, availableSeats, formattedDate }: Props) {
+export default function MovieCard({ sessionId, movie, availableSeats, formattedDate }: Props) {
   const router = useRouter();
   const t = useTranslations();
   const locale = useLocale();
@@ -81,7 +82,7 @@ export default function MovieCard({ movie, availableSeats, formattedDate }: Prop
             <p className="text-white text-xl font-bold">{formattedPrice} UZS</p>
           </div>
           <button
-            onClick={() => router.push(`/${locale}/booking`)}
+            onClick={() => router.push(`/${locale}/booking?sessionId=${sessionId}`)}
             disabled={availableSeats === 0}
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition-colors
                        hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-400"

@@ -19,14 +19,14 @@ function toVerified(b: {
   token: string;
   usedAt: Date | null;
   seat: { row: number; number: number };
-  movie: { title: string; date: Date; time: string; hall: string };
+  session: { date: Date; time: string; movie: { title: string }; hall: { name: string } };
 }): VerifiedBooking {
   return {
     token: b.token,
-    movieTitle: b.movie.title,
-    date: b.movie.date,
-    time: b.movie.time,
-    hall: b.movie.hall,
+    movieTitle: b.session.movie.title,
+    date: b.session.date,
+    time: b.session.time,
+    hall: b.session.hall.name,
     row: b.seat.row,
     number: b.seat.number,
     usedAt: b.usedAt,
@@ -36,7 +36,7 @@ function toVerified(b: {
 export async function verifyTicket(token: string): Promise<VerifyResult> {
   const booking = await prisma.booking.findUnique({
     where: { token },
-    include: { seat: true, movie: true },
+    include: { seat: true, session: { include: { movie: true, hall: true } } },
   });
 
   if (!booking) return { ok: false, reason: "NOT_FOUND" };

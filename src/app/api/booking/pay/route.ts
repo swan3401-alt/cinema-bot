@@ -15,34 +15,19 @@ export async function POST(req: NextRequest) {
     const ids: string[] = bookingIds.split(",");
     const bookings = await prisma.booking.findMany({
       where: { id: { in: ids } },
-      include: { movie: true, seat: true },
+      include: { session: { include: { movie: true } }, seat: true },
     });
-
     if (bookings.length !== ids.length) {
       return NextResponse.json({ error: "Some bookings not found" }, { status: 404 });
     }
 
-    const notPending = bookings.filter((b) => b.status !== "PENDING");
-    if (notPending.length > 0) {
-      return NextResponse.json({ error: "Some bookings are no longer pending" }, { status: 409 });
-    }
-
-    const totalAmount = bookings[0].movie.price * bookings.length;
-
-    // Move to AWAITING_PAYMENT
     await prisma.booking.updateMany({
       where: { id: { in: ids } },
       data: { status: "AWAITING_PAYMENT" },
     });
 
-    // Send the same instructions to the customer's chat
-    // await sendPaymentInstructions({
-    //   telegramId: bookings[0].telegramId,
-    //   locale: bookings[0].locale,
-    //   amount: totalAmount,
-    //   cardNumber: PAYMENT_CARD_NUMBER,
-    //   cardHolder: PAYMENT_CARD_HOLDER,
-    // });
+    const totalAmount = bookings[0].session.price * bookings.length;
+
     const sent = await sendPaymentInstructions({
       telegramId: bookings[0].telegramId,
       locale: bookings[0].locale,
@@ -50,21 +35,15 @@ export async function POST(req: NextRequest) {
       cardNumber: PAYMENT_CARD_NUMBER,
       cardHolder: PAYMENT_CARD_HOLDER,
     });
-    if (!sent) {
-      console.warn("Payment instructions not delivered to chat:", bookings[0].telegramId);
-    }
+    if (!sent) console.warn("Payment instructions not delivered to chat:", bookings[0].telegramId);
 
     return NextResponse.json({
-      mode: "manual",
       cardNumber: PAYMENT_CARD_NUMBER,
       cardHolder: PAYMENT_CARD_HOLDER,
-      totalAmount,
-      bookingIds,
+      amount: totalAmount,
     });
   } catch (error) {
     console.error("Pay error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  
 }

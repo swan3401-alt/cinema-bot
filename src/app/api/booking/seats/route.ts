@@ -1,40 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { activeBookingFilter } from "@/lib/availability";
 import { activeMovieCutoff } from "@/lib/movieAccess";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  try {
-    const movie = await prisma.movie.findFirst({
-      where: { date: { gte: activeMovieCutoff() } },
-      orderBy: { date: "asc" },
-      include: {
-        seats: {
-          orderBy: [{ row: "asc" }, { number: "asc" }],
-          include: {
-            bookings: { where: activeBookingFilter(), select: { id: true } },
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get("sessionId");
+  if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
+
+  const session = await prisma.session.findFirst({
+    where: { id: sessionId, date: { gte: activeMovieCutoff() } },
+    include: {
+      movie: true,
+      hall: {
+        include: {
+          seats: {
+            orderBy: [{ row: "asc" }, { number: "asc" }],
+            include: { bookings: { where: { sessionId, ...activeBookingFilter() }, select: { id: true } } },
           },
         },
       },
-    });
+    },
+  });
 
-    if (!movie) {
-      return NextResponse.json({ error: "No movie found" }, { status: 404 });
-    }
+  if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
 
-    const seats = movie.seats.map((seat) => ({
-      id: seat.id,
-      row: seat.row,
-      number: seat.number,
-      type: seat.type,
-      isBooked: seat.bookings.length > 0,
-    }));
+  const seats = session.hall.seats.map((s) => ({
+    id: s.id, row: s.row, number: s.number, type: s.type, isBooked: s.bookings.length > 0,
+  }));
 
-    return NextResponse.json({ ...movie, seats });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  return NextResponse.json({
+    sessionId: session.id,
+    movieTitle: session.movie.title,
+    date: session.date,
+    time: session.time,
+    hall: session.hall.name,
+    price: session.price,
+    seats,
+  });
 }

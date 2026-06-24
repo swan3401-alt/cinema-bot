@@ -1,17 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-//    generator client {
-//      provider = "prisma-client"
-//      output   = "../src/generated/prisma"
-//    }
-//
-//    datasource db {
-//      provider = "sqlite"
-//    }
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
@@ -21,34 +7,53 @@ datasource db {
   provider = "postgresql"
 }
 
-model Movie {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  posterUrl   String
-  date        DateTime
-  time        String
-  hall        String
-  totalSeats  Int
-  price       Int
-  createdAt   DateTime  @default(now())
-  seats       Seat[]
-  bookings    Booking[]
+model Hall {
+  id        String    @id @default(cuid())
+  name      String
+  seats     Seat[]
+  sessions  Session[]
+  createdAt DateTime  @default(now())
 }
 
 model Seat {
+  id       String    @id @default(cuid())
+  hallId   String
+  row      Int
+  number   Int
+  type     SeatType  @default(STANDARD)
+  hall     Hall      @relation(fields: [hallId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([hallId, row, number])
+}
+
+model Movie {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @default("")
+  posterUrl   String
+  createdAt   DateTime  @default(now())
+  sessions    Session[]
+}
+
+model Session {
   id        String    @id @default(cuid())
   movieId   String
-  row       Int
-  number    Int
-  type      SeatType  @default(STANDARD)
-  movie     Movie     @relation(fields: [movieId], references: [id])
+  hallId    String
+  date      DateTime
+  time      String
+  price     Int
+  movie     Movie     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  hall      Hall      @relation(fields: [hallId], references: [id])
   bookings  Booking[]
+  createdAt DateTime  @default(now())
+
+  @@index([date])
 }
 
 model Booking {
   id          String        @id @default(cuid())
-  movieId     String
+  sessionId   String
   seatId      String
   telegramId  String
   locale      String        @default("uz")
@@ -57,32 +62,33 @@ model Booking {
   paymentRef  String?
   paidAt      DateTime?
   usedAt      DateTime?
-  reviewMsgId String?        // staff-group message id for the receipt
+  reviewMsgId String?
   createdAt   DateTime      @default(now())
-  movie       Movie         @relation(fields: [movieId], references: [id])
+  session     Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   seat        Seat          @relation(fields: [seatId], references: [id])
 
   @@index([seatId, status])
   @@index([status, createdAt])
   @@index([telegramId, status])
-}
-
-enum SeatType {
-  WIDE
-  STANDARD
-}
-
-enum BookingStatus {
-  PENDING
-  AWAITING_PAYMENT
-  PAID
-  USED
-  EXPIRED
-  CANCELLED
+  @@index([sessionId, status])
 }
 
 model UserPref {
   telegramId String   @id
-  locale     String
+  locale     String   @default("uz")
   updatedAt  DateTime @updatedAt
+}
+
+enum SeatType { 
+  WIDE 
+  STANDARD 
+}
+
+enum BookingStatus {
+  PENDING 
+  AWAITING_PAYMENT 
+  PAID 
+  USED 
+  EXPIRED 
+  CANCELLED 
 }

@@ -28,6 +28,10 @@ export default withNextIntl({
         port: '',
         pathname: '/images/S/pv-target-images/**',
       },
+      { 
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com"
+      },
     ],
   },
 });
