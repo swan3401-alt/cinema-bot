@@ -29,7 +29,10 @@ export async function POST(req: NextRequest) {
     // webhook finds nothing PENDING and sends no duplicate tickets)
     const toConfirm = await prisma.booking.findMany({
       where: { id: { in: ids }, status: "PENDING" },
-      include: { seat: true, movie: true },
+      include: { 
+        seat: true, 
+        session: { include: { movie: true, hall: true } },
+      },
     });
 
     await prisma.booking.updateMany({
@@ -45,10 +48,10 @@ export async function POST(req: NextRequest) {
         locale: b.locale,
         seat: { row: b.seat.row, number: b.seat.number },
         movie: {
-          title: b.movie.title,
-          date: b.movie.date,
-          time: b.movie.time,
-          hall: b.movie.hall,
+          title: b.session.movie.title,
+          date: b.session.date,
+          time: b.session.time,
+          hall: b.session.hall.name,
         },
       });
     }

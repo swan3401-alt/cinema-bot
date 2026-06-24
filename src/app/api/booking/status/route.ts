@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     where: { id: { in: ids } },
     include: {
       seat: true,
-      movie: true,
+      session: { include: { movie: true, hall: true } },
     },
   });
 
@@ -31,7 +31,12 @@ export async function GET(req: NextRequest) {
       token: b.token,
       status: b.status,
       seat: { row: b.seat.row, number: b.seat.number, type: b.seat.type },
-      movie: { title: b.movie.title, date: b.movie.date, time: b.movie.time, hall: b.movie.hall },
+      movie: {
+        title: b.session.movie.title,
+        date: b.session.date,
+        time: b.session.time,
+        hall: b.session.hall.name,
+      },
     })),
   });
 }

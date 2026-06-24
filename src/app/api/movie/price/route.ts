@@ -4,20 +4,20 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const movieId = req.nextUrl.searchParams.get("movieId");
+  const sessionId = req.nextUrl.searchParams.get("sessionId");
 
-  if (!movieId) {
-    return NextResponse.json({ error: "Missing movieId" }, { status: 400 });
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
   }
 
-  const movie = await prisma.movie.findUnique({
-    where: { id: movieId },
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
     select: { price: true },
   });
 
-  if (!movie) {
-    return NextResponse.json({ error: "Movie not found" }, { status: 404 });
+  if (!session) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ price: movie.price });
+  return NextResponse.json({ price: session.price });
 }

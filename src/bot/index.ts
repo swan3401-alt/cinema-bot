@@ -271,7 +271,10 @@ bot.callbackQuery(/^cxl_ok:(.+)$/, async (ctx) => {
 
   const booking = await prisma.booking.findUnique({
     where: { token },
-    include: { seat: true, movie: true },
+    include: 
+    { seat: true,
+      session: { include: { movie: true, hall: true } },
+    },
   });
   if (!booking) {
     await ctx.answerCallbackQuery("Booking not found");

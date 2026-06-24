@@ -1,30 +1,40 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { activeBookingFilter } from "@/lib/availability";
 import { activeMovieCutoff } from "@/lib/movieAccess";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const movie = await prisma.movie.findFirst({
-      where: { date: { gte: activeMovieCutoff() } },
-      orderBy: { date: "asc" },
+    const sessionId = req.nextUrl.searchParams.get("sessionId");
+
+    const session = await prisma.session.findFirst({
+      where: {
+        date: { gte: activeMovieCutoff() },
+        ...(sessionId ? { id: sessionId } : {}),
+      },
+      orderBy: [{ date: "asc" }, { time: "asc" }],
       include: {
-        seats: {
-          orderBy: [{ row: "asc" }, { number: "asc" }],
+        movie: true,
+        hall: {
           include: {
-            bookings: { where: activeBookingFilter(), select: { id: true } },
+            seats: {
+              orderBy: [{ row: "asc" }, { number: "asc" }],
+              include: {
+                bookings: { where: { sessionId: sessionId ?? undefined, ...activeBookingFilter() }, select: { id: true } },
+              },
+            },
           },
         },
       },
     });
 
-    if (!movie) {
-      return NextResponse.json({ error: "No upcoming movie found" }, { status: 404 });
+    if (!session) {
+      return NextResponse.json({ error: "No upcoming session found" }, { status: 404 });
     }
 
-    const seats = movie.seats.map((seat) => ({
+    const seats = session.hall.seats.map((seat) => ({
       id: seat.id,
       row: seat.row,
       number: seat.number,
@@ -32,9 +42,19 @@ export async function GET() {
       isBooked: seat.bookings.length > 0,
     }));
 
-    return NextResponse.json({ ...movie, seats });
+    return NextResponse.json({
+      sessionId: session.id,
+      movieTitle: session.movie.title,
+      description: session.movie.description,
+      posterUrl: session.movie.posterUrl,
+      date: session.date,
+      time: session.time,
+      hall: session.hall.name,
+      price: session.price,
+      seats,
+    });
   } catch (error) {
-    console.error("Failed to fetch movie:", error);
+    console.error("Failed to fetch session:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
