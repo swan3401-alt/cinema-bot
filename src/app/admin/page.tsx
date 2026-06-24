@@ -21,6 +21,9 @@ export default async function AdminHome({
   ]);
 
   const s = `?secret=${encodeURIComponent(secret!)}`;
+  const scanHref = process.env.STAFF_SECRET
+    ? `/scan?secret=${encodeURIComponent(process.env.STAFF_SECRET)}`
+    : null;
 
   return (
     <main className="max-w-3xl mx-auto px-5 py-8">
@@ -49,6 +52,20 @@ export default async function AdminHome({
           count={sessions}
           countLabel="sessions"
         />
+        
+        {scanHref && (
+          <a
+            href={scanHref}
+            className="block rounded-2xl border border-white/10 bg-gray-900/60 p-5 transition-colors hover:bg-gray-900"
+          >
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg font-semibold">Scanner</h2>
+              <span className="text-sm text-gray-400">tickets</span>
+            </div>
+            <p className="mt-1 text-sm text-gray-400">Open the entrance QR scanner</p>
+          </a>
+        )}
+
       </div>
     </main>
   );
