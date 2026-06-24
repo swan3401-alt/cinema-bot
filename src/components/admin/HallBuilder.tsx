@@ -67,14 +67,11 @@ export default function HallBuilder({ secret }: { secret: string }) {
     });
   }
 
-  function fillAll(target: CellState) {
+function fillAll(target: CellState) {
     if (locked) return;
     setGrid((prev) =>
       prev.map((row) =>
-        row.map((cell) =>
-          // "Gap" clears everything; Standard/Wide only recolor existing seats
-          target === "EMPTY" ? "EMPTY" : cell === "EMPTY" ? "EMPTY" : target
-        )
+        row.map(() => target)
       )
     );
   }
