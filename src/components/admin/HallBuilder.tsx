@@ -67,6 +67,18 @@ export default function HallBuilder({ secret }: { secret: string }) {
     });
   }
 
+  function fillAll(target: CellState) {
+    if (locked) return;
+    setGrid((prev) =>
+      prev.map((row) =>
+        row.map((cell) =>
+          // "Gap" clears everything; Standard/Wide only recolor existing seats
+          target === "EMPTY" ? "EMPTY" : cell === "EMPTY" ? "EMPTY" : target
+        )
+      )
+    );
+  }
+
   async function loadHall(id: string) {
     setErr(null); setMsg(null);
     const res = await fetch(`/api/admin/halls/${id}?secret=${encodeURIComponent(secret)}`);
@@ -99,7 +111,7 @@ export default function HallBuilder({ secret }: { secret: string }) {
     if (!name.trim()) { setErr("Give the hall a name"); return; }
     if (seatCount === 0) { setErr("Add at least one seat"); return; }
 
-    // Convert grid → seat list (1-indexed row/number)
+    // Convert grid -> seat list (1-indexed row/number)
     const seats: { row: number; number: number; type: SeatType }[] = [];
     for (let r = 0; r < rows; r++)
       for (let c = 0; c < cols; c++)
@@ -167,10 +179,20 @@ export default function HallBuilder({ secret }: { secret: string }) {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs text-gray-400">
+      {/* <div className="flex gap-4 text-xs text-gray-400">
         <Swatch className="bg-blue-600 border-blue-400" label="Standard" />
         <Swatch className="bg-amber-500 border-amber-300" label="Wide" />
         <Swatch className="bg-gray-800/40 border-gray-700" label="Gap (click to add)" />
+      </div> */}
+
+      {/* Legend - click to apply a type to all placed seats */}
+      <div className="flex gap-4 text-xs text-gray-400">
+        <Swatch className="bg-blue-600 border-blue-400" label="Standard"
+          onClick={() => fillAll("STANDARD")} disabled={locked} />
+        <Swatch className="bg-amber-500 border-amber-300" label="Wide"
+          onClick={() => fillAll("WIDE")} disabled={locked} />
+        <Swatch className="bg-gray-800/40 border-gray-700" label="Gap (clear all)"
+          onClick={() => fillAll("EMPTY")} disabled={locked} />
       </div>
 
       {/* Grid */}
@@ -231,6 +253,7 @@ function Dim({
       <span className="text-gray-400">{label}</span>
       <input
         type="number" min={1} max={max} value={value} disabled={disabled}
+        onFocus={(e) => e.target.select()}
         onChange={(e) => setValue(Math.min(Math.max(1, Number(e.target.value) || 1), max))}
         className="w-20 rounded-lg bg-gray-900 border border-white/10 px-3 py-2 disabled:opacity-50"
       />
@@ -238,11 +261,20 @@ function Dim({
   );
 }
 
-function Swatch({ className, label }: { className: string; label: string }) {
+function Swatch({
+  className, label, onClick, disabled,
+}: { className: string; label: string; onClick?: () => void; disabled?: boolean }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed
+                 enabled:hover:text-white transition-colors"
+    >
       <div className={`h-4 w-4 rounded-sm border ${className}`} />
       <span>{label}</span>
-    </div>
+    </button>
   );
 }
+
