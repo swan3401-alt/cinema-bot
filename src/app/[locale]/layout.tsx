@@ -7,6 +7,8 @@ import { routing } from "@/i18n/routing";
 import Header from "@/components/Header";
 import TelegramLocaleSync from "@/components/TelegramLocaleSync";
 import "../globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 
 export const metadata: Metadata = {
   title: "Cinema Booking",
@@ -39,6 +41,7 @@ export default async function LocaleLayout({
           <TelegramLocaleSync />
           <Header />
           {children}
+          <SpeedInsights />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -17,6 +17,7 @@
     "@telegram-apps/sdk": "^3.11.8",
     "@twa-dev/sdk": "^8.0.2",
     "@vercel/blob": "^2.4.1",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.17.0",
     "better-sqlite3": "^12.10.0",
     "grammy": "^1.43.0",
