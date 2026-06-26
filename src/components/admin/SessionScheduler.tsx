@@ -83,7 +83,8 @@ export default function SessionScheduler({ secret }: { secret: string }) {
   function toDateInput(iso: string) {
   // format the stored instant as YYYY-MM-DD in Tashkent for <input type="date">
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tashkent", year: "numeric", month: "2-digit", day: "2-digit",
+    timeZone: "UTC",
+    year: "numeric", month: "2-digit", day: "2-digit",
   }).format(new Date(iso));
   return parts; // en-CA gives YYYY-MM-DD
 }
@@ -221,6 +222,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Tashkent",
+    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
   });
 }

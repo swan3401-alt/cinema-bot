@@ -43,8 +43,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     price: s.price,
     availableSeats: s.hall._count.seats - s._count.bookings,
     dateLabel: s.date.toLocaleDateString(locale, {
-      weekday: "long", year: "numeric", month: "long", day: "numeric",
-      timeZone: "Asia/Tashkent",
+      weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
     }),
   }));
 
