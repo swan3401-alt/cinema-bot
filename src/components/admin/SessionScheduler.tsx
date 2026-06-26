@@ -77,6 +77,58 @@ export default function SessionScheduler({ secret }: { secret: string }) {
   const noHalls = halls.length === 0;
   const noMovies = movies.length === 0;
 
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  function toDateInput(iso: string) {
+  // format the stored instant as YYYY-MM-DD in Tashkent for <input type="date">
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tashkent", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(iso));
+  return parts; // en-CA gives YYYY-MM-DD
+}
+
+  function startEdit(s: SessionRow) {
+    setEditingId(s.id);
+    // find the movie by title->id from the loaded list
+    const m = movies.find((x) => x.title === s.movieTitle);
+    const h = halls.find((x) => x.name === s.hallName);
+    setMovieId(m?.id ?? "");
+    setHallId(h?.id ?? "");
+    setDate(toDateInput(s.date)); // YYYY-MM-DD in Tashkent
+    setTime(s.time);
+    setPrice(String(s.price));
+    setErr(null); setMsg(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setMovieId(""); setHallId(""); setDate(""); setTime(""); setPrice("");
+    setErr(null); setMsg(null);
+  }
+
+  async function submit() {
+    setErr(null); setMsg(null);
+    if (!movieId || !hallId || !date || !time || price === "") { setErr("Fill in every field"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/sessions", {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret, id: editingId ?? undefined, movieId, hallId, date, time, price: Number(price) }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error ?? "Failed"); return; }
+      setMsg(editingId ? "Session updated" : "Session scheduled");
+      if (editingId) cancelEdit(); else { setTime(""); setPrice(""); }
+      load();
+    } catch {
+      setErr("Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
       {/* Create form */}
@@ -115,10 +167,11 @@ export default function SessionScheduler({ secret }: { secret: string }) {
         </div>
 
         <div className="mt-4 flex items-center gap-4">
-          <button onClick={create} disabled={saving || noHalls || noMovies}
+<button onClick={submit} disabled={saving || noHalls || noMovies}
             className="rounded-xl bg-blue-600 px-6 py-2.5 font-semibold text-white hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-400">
-            {saving ? "Scheduling…" : "Schedule"}
+            {saving ? "Saving…" : editingId ? "Update session" : "Schedule"}
           </button>
+          {editingId && <button onClick={cancelEdit} className="text-sm text-gray-400 hover:text-white">Cancel</button>}
           {msg && <span className="text-sm text-green-400">{msg}</span>}
           {err && <span className="text-sm text-red-400">{err}</span>}
         </div>
@@ -140,6 +193,10 @@ export default function SessionScheduler({ secret }: { secret: string }) {
               <p className="text-white text-sm font-semibold">{s.price.toLocaleString("en-US").replace(/,/g, " ")} UZS</p>
               <p>{s.booked}/{s.capacity} booked</p>
             </div>
+            <button onClick={() => startEdit(s)}
+              className="rounded-lg border border-white/15 px-3 py-1.5 text-sm hover:bg-white/5">
+              Edit
+            </button>
             <button onClick={() => remove(s)}
               className="rounded-lg border border-red-500/40 px-3 py-1.5 text-sm text-red-300 hover:bg-red-500/10">
               Delete
@@ -163,5 +220,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Tashkent",
+  });
 }

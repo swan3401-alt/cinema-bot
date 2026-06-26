@@ -133,6 +133,21 @@ function fillAll(target: CellState) {
     }
   }
 
+  async function deleteHall() {
+  if (!editingId) return;
+  if (!confirm(`Delete hall "${name}"? This can't be undone.`)) return;
+  setErr(null); setMsg(null);
+  const res = await fetch("/api/admin/halls", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secret, id: editingId }),
+  });
+  const data = await res.json();
+  if (!res.ok) { setErr(data.error ?? "Delete failed"); return; }
+  newHall();
+  setMsg("Hall deleted");
+}
+
   return (
     <div className="flex flex-col gap-6">
       {/* Load / new */}
@@ -231,6 +246,16 @@ function fillAll(target: CellState) {
           {saving ? "Saving…" : editingId ? "Update hall" : "Create hall"}
         </button>
         <span className="text-sm text-gray-400">{seatCount} seats</span>
+
+        {editingId && (
+          <button
+            onClick={deleteHall}
+            className="rounded-xl border border-red-500/40 px-4 py-3 text-sm text-red-300 hover:bg-red-500/10"
+          >
+            Delete hall
+          </button>
+        )}
+        
         {msg && <span className="text-sm text-green-400">{msg}</span>}
         {err && <span className="text-sm text-red-400">{err}</span>}
       </div>

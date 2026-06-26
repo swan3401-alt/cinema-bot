@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    // date arrives as "YYYY-MM-DD"; store midnight GMT+5 for that calendar day
-    const day = new Date(`${date}T00:00:00+05:00`);
+    // date arrives as "YYYY-MM-DD"; store as midnight UTC for that calendar day  
+    const day = new Date(`${date}T00:00:00Z`);
     if (Number.isNaN(day.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
@@ -100,6 +100,54 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("session delete error:", e);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { secret, id, movieId, hallId, date, time, price } = await req.json();
+    if (!isAdmin(secret)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const existing = await prisma.session.findUnique({ where: { id } });
+    if (!existing) return NextResponse.json({ error: "Session not found" }, { status: 404 });
+
+    const activeCount = await prisma.booking.count({
+      where: { sessionId: id, ...activeBookingFilter() },
+    });
+
+    // If a hall/movie change is requested while bookings are active, refuse that part
+    if (activeCount > 0 && ((hallId && hallId !== existing.hallId) || (movieId && movieId !== existing.movieId))) {
+      return NextResponse.json(
+        { error: "This session has active bookings; movie and hall can't be changed." },
+        { status: 409 }
+      );
+    }
+
+    const priceInt = price != null ? Math.round(Number(price)) : existing.price;
+    if (!Number.isFinite(priceInt) || priceInt < 0) {
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+    }
+
+    const day = date ? new Date(`${date}T00:00:00Z`) : existing.date;
+    if (Number.isNaN(day.getTime())) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    await prisma.session.update({
+      where: { id },
+      data: {
+        movieId: movieId ?? existing.movieId,
+        hallId: hallId ?? existing.hallId,
+        date: day,
+        time: time ?? existing.time,
+        price: priceInt,
+      },
+    });
+    return NextResponse.json({ id });
+  } catch (e) {
+    console.error("session update error:", e);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

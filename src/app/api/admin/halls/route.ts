@@ -68,3 +68,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { secret, id } = await req.json();
+    if (!isAdmin(secret)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const bookingCount = await prisma.booking.count({ where: { session: { hallId: id } } });
+    if (bookingCount > 0) {
+      return NextResponse.json(
+        { error: "This hall has sessions with bookings and can't be deleted." },
+        { status: 409 }
+      );
+    }
+    const sessionCount = await prisma.session.count({ where: { hallId: id } });
+    if (sessionCount > 0) {
+      return NextResponse.json(
+        { error: "This hall is used by scheduled sessions. Delete those first." },
+        { status: 409 }
+      );
+    }
+
+    await prisma.hall.delete({ where: { id } }); // cascades to seats
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("hall delete error:", e);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
