@@ -12,10 +12,25 @@ interface TelegramUser {
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
+  initData?: string;
   initDataUnsafe?: { user?: TelegramUser };
 }
 
 const CACHE_KEY = "tg_user";
+
+// initDataUnsafe.user is occasionally empty even though the raw initData
+// string is populated (seen on some Android WebView versions) - parse the
+// raw query string as a fallback instead of relying solely on the SDK's parsing.
+function extractUser(tg: TelegramWebApp): TelegramUser | undefined {
+  if (tg.initDataUnsafe?.user) return tg.initDataUnsafe.user;
+  if (!tg.initData) return undefined;
+  try {
+    const raw = new URLSearchParams(tg.initData).get("user");
+    return raw ? (JSON.parse(raw) as TelegramUser) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 
 export function useTelegram() {
@@ -35,7 +50,7 @@ export function useTelegram() {
     } catch {}
 
     let attempts = 0;
-    const maxAttempts = 1000; // ~100s, for slow networks/devices
+    const maxAttempts = 100; // ~10s, for slow networks/devices
 
     const interval = setInterval(() => {
       const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } })
@@ -45,7 +60,7 @@ export function useTelegram() {
       if (tg) {
         tg.ready();
         tg.expand();
-        const u = tg.initDataUnsafe?.user;
+        const u = extractUser(tg);
         if (u) {
           setUser(u);
           try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(u)); } catch {}
