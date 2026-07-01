@@ -46,7 +46,9 @@ export default function TelegramLocaleSync() {
       const segments = pathname.split("/");
       if (segments[1] !== target) {
         segments[1] = target;
-        router.replace(segments.join("/"));
+        // Preserve the hash - it carries Telegram's tgWebAppData, which a
+        // bare-path replace would otherwise drop from the address bar.
+        router.replace(segments.join("/") + window.location.hash);
       }
     })();
   }, [isReady, user, pathname, router]);
