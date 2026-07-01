@@ -35,7 +35,7 @@ export function useTelegram() {
     } catch {}
 
     let attempts = 0;
-    const maxAttempts = 100; // ~10s, for slow networks/devices
+    const maxAttempts = 1000; // ~100s, for slow networks/devices
 
     const interval = setInterval(() => {
       const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } })
