@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 interface TelegramUser {
   id: number;
@@ -16,7 +16,8 @@ interface TelegramWebApp {
   initDataUnsafe?: { user?: TelegramUser };
 }
 
-const CACHE_KEY = "tg_user";
+const USER_CACHE_KEY = "tg_user";
+const INIT_DATA_CACHE_KEY = "tg_init_data";
 
 // initDataUnsafe.user is occasionally empty even though the raw initData
 // string is populated (seen on some Android WebView versions) - parse the
@@ -32,9 +33,17 @@ function extractUser(tg: TelegramWebApp): TelegramUser | undefined {
   }
 }
 
+interface TelegramState {
+  user: TelegramUser | null;
+  initData: string | null;
+  isReady: boolean;
+  isTelegram: boolean;
+  close: () => void;
+}
 
-export function useTelegram() {
+function useTelegramState(): TelegramState {
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [initData, setInitData] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   const close = useCallback(() => {
@@ -43,10 +52,14 @@ export function useTelegram() {
   }, []);
 
   useEffect(() => {
-    // 1) Reuse a user captured earlier this session (survives hard reloads)
+    // 1) Reuse a user captured earlier this session (survives hard reloads,
+    // including a WebView being reconstructed after the address bar lost the
+    // #tgWebAppData hash - see src/lib/telegramNav.ts)
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
+      const cached = sessionStorage.getItem(USER_CACHE_KEY);
       if (cached) setUser(JSON.parse(cached));
+      const cachedInitData = sessionStorage.getItem(INIT_DATA_CACHE_KEY);
+      if (cachedInitData) setInitData(cachedInitData);
     } catch {}
 
     let attempts = 0;
@@ -63,7 +76,11 @@ export function useTelegram() {
         const u = extractUser(tg);
         if (u) {
           setUser(u);
-          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(u)); } catch {}
+          try { sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(u)); } catch {}
+          if (tg.initData) {
+            setInitData(tg.initData);
+            try { sessionStorage.setItem(INIT_DATA_CACHE_KEY, tg.initData); } catch {}
+          }
           clearInterval(interval);
           setIsReady(true);
         } else if (attempts >= maxAttempts) {
@@ -79,5 +96,24 @@ export function useTelegram() {
     return () => clearInterval(interval);
   }, []);
 
-  return { user, isReady, isTelegram: user !== null, close };
+  return { user, initData, isReady, isTelegram: user !== null, close };
+}
+
+const TelegramContext = createContext<TelegramState | null>(null);
+
+// Mounted once in the root layout so every page shares a single polling
+// instance instead of each page re-running its own ~10s discovery loop.
+export function TelegramProvider({ children }: { children: React.ReactNode }) {
+  const state = useTelegramState();
+  return (
+    <TelegramContext.Provider value={state}>{children}</TelegramContext.Provider>
+  );
+}
+
+export function useTelegram(): TelegramState {
+  const ctx = useContext(TelegramContext);
+  if (!ctx) {
+    throw new Error("useTelegram must be used within a TelegramProvider");
+  }
+  return ctx;
 }

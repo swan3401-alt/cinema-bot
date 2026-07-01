@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { withTgHash } from "@/lib/telegramNav";
 
 export interface SessionView {
   sessionId: string;
@@ -203,7 +204,7 @@ function SessionSlide({ session }: { session: SessionView }) {
             <p className="text-white text-xl font-bold">{formattedPrice} UZS</p>
           </div>
           <button
-            onClick={() => router.push(`/${locale}/booking?sessionId=${session.sessionId}`)}
+            onClick={() => router.push(withTgHash(`/${locale}/booking?sessionId=${session.sessionId}`))}
             disabled={soldOut}
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition-colors
                        hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-400"

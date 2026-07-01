@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Seat, SeatStatus } from "@/types";
 import { SeatRow } from "@/lib/seatLayout";
+import { withTgHash } from "@/lib/telegramNav";
 import SeatButton from "./SeatButton";
 
 interface Props { rows: SeatRow[]; price: number; sessionId: string; }
@@ -33,7 +34,7 @@ export default function SeatMap({ rows, price, sessionId }: Props) {
   function handleConfirm() {
     if (selectedSeats.length === 0) return;
     const seatIds = selectedSeats.map((s) => s.id).join(",");
-    router.push(`/${locale}/booking/confirm?seatIds=${seatIds}&sessionId=${sessionId}`);
+    router.push(withTgHash(`/${locale}/booking/confirm?seatIds=${seatIds}&sessionId=${sessionId}`));
   }
 
   const totalPrice = price * selectedSeats.length;

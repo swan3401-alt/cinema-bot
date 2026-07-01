@@ -78,6 +78,7 @@
 import { useLocale } from "next-intl";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTelegram } from "@/hooks/useTelegram";
+import { withTgHash } from "@/lib/telegramNav";
 import { useEffect, useState, useTransition, useRef } from "react";
 
 const locales = [
@@ -149,7 +150,7 @@ export default function LanguageSwitcher() {
     const query = searchParams.toString();
     const path = segments.join("/") + (query ? `?${query}` : "");
 
-    startTransition(() => router.replace(path));
+    startTransition(() => router.replace(withTgHash(path)));
   }
 
   return (

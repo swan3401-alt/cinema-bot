@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { withTgHash } from "@/lib/telegramNav";
 
 export default function BackButton({ href }: { href: string }) {
   const router = useRouter();
@@ -9,7 +10,7 @@ export default function BackButton({ href }: { href: string }) {
 
   return (
     <button
-      onClick={() => router.push(href)}
+      onClick={() => router.push(withTgHash(href))}
       className="mb-4 flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-base font-medium text-lg"
     >
       <svg

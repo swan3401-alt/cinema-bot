@@ -6,6 +6,7 @@ import Script from "next/script";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/Header";
 import TelegramLocaleSync from "@/components/TelegramLocaleSync";
+import { TelegramProvider } from "@/hooks/useTelegram";
 import "../globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -38,10 +39,12 @@ export default async function LocaleLayout({
           strategy="beforeInteractive"
         />
         <NextIntlClientProvider messages={messages}>
-          <TelegramLocaleSync />
-          <Header />
-          {children}
-          <SpeedInsights />
+          <TelegramProvider>
+            <TelegramLocaleSync />
+            <Header />
+            {children}
+            <SpeedInsights />
+          </TelegramProvider>
         </NextIntlClientProvider>
       </body>
     </html>

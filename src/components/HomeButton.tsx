@@ -2,6 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
+import { withTgHash } from "@/lib/telegramNav";
 
 export default function HomeButton() {
   const locale = useLocale();
@@ -9,7 +10,7 @@ export default function HomeButton() {
 
   return (
     <button
-      onClick={() => router.push(`/${locale}`)}
+      onClick={() => router.push(withTgHash(`/${locale}`))}
       className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-lg font-medium"
     >
       <svg

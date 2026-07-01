@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { withTgHash } from "@/lib/telegramNav";
 
 export default function TicketsButton() {
   const locale = useLocale();
@@ -31,7 +32,7 @@ export default function TicketsButton() {
     //   {t("tickets.nav")}
     // </button>
     <button
-      onClick={() => router.push(`/${locale}/tickets`)}
+      onClick={() => router.push(withTgHash(`/${locale}/tickets`))}
       className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-lg font-medium"
     >
       <svg

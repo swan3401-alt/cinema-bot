@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { useTelegram } from "@/hooks/useTelegram";
+import { withTgHash } from "@/lib/telegramNav";
 import BackButton from "@/components/BackButton";
 
 interface SeatInfo {
@@ -27,7 +28,7 @@ export default function ConfirmPage() {
   const params = useSearchParams();
   const t = useTranslations();
   const locale = useLocale();
-  const { user, isReady, isTelegram, close } = useTelegram();
+  const { user, initData, isReady, isTelegram, close } = useTelegram();
 
   const sessionId = params.get("sessionId") ?? "";
   const seatIds = useMemo(
@@ -87,6 +88,7 @@ export default function ConfirmPage() {
           seatIds,
           sessionId,
           telegramId: user.id.toString(),
+          initData,
           locale,
         }),
       });
@@ -95,12 +97,12 @@ export default function ConfirmPage() {
       if (!createRes.ok) {
         if (createRes.status === 409) {
           setError(t("booking.seatAlreadyBooked"));
-          setTimeout(() => router.push(`/${locale}/booking?sessionId=${sessionId}`), 3000);
+          setTimeout(() => router.push(withTgHash(`/${locale}/booking?sessionId=${sessionId}`)), 3000);
           return;
         }
         if (createRes.status === 410) {
           setError(t("booking.errorCreating"));
-          setTimeout(() => router.push(`/${locale}`), 3000);
+          setTimeout(() => router.push(withTgHash(`/${locale}`)), 3000);
           return;
         }
         throw new Error(createData.error);
@@ -168,7 +170,7 @@ export default function ConfirmPage() {
         </div>
 
         <button
-          onClick={() => router.push(`/${locale}`)}
+          onClick={() => router.push(withTgHash(`/${locale}`))}
           className="mt-6 w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors"
         >
           {t("success.backHome")}
