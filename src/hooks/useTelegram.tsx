@@ -52,13 +52,15 @@ function useTelegramState(): TelegramState {
   }, []);
 
   useEffect(() => {
-    // 1) Reuse a user captured earlier this session (survives hard reloads,
-    // including a WebView being reconstructed after the address bar lost the
-    // #tgWebAppData hash - see src/lib/telegramNav.ts)
+    // 1) Reuse a user captured earlier - localStorage (not sessionStorage) so
+    // this survives a WebView being fully torn down and recreated
+    // (backgrounding/low memory), not just a hard reload within the same
+    // WebView session, including cases where the address bar lost the
+    // #tgWebAppData hash - see src/lib/telegramNav.ts
     try {
-      const cached = sessionStorage.getItem(USER_CACHE_KEY);
+      const cached = localStorage.getItem(USER_CACHE_KEY);
       if (cached) setUser(JSON.parse(cached));
-      const cachedInitData = sessionStorage.getItem(INIT_DATA_CACHE_KEY);
+      const cachedInitData = localStorage.getItem(INIT_DATA_CACHE_KEY);
       if (cachedInitData) setInitData(cachedInitData);
     } catch {}
 
@@ -76,10 +78,18 @@ function useTelegramState(): TelegramState {
         const u = extractUser(tg);
         if (u) {
           setUser(u);
-          try { sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(u)); } catch {}
+          try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u)); } catch {}
           if (tg.initData) {
             setInitData(tg.initData);
-            try { sessionStorage.setItem(INIT_DATA_CACHE_KEY, tg.initData); } catch {}
+            try { localStorage.setItem(INIT_DATA_CACHE_KEY, tg.initData); } catch {}
+            // Convert this one-time initData into a persistent server-side
+            // session (fire-and-forget) so identity survives later requests
+            // even if a fresh, valid initData isn't available on them.
+            fetch("/api/auth/telegram", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ initData: tg.initData }),
+            }).catch(() => {});
           }
           clearInterval(interval);
           setIsReady(true);

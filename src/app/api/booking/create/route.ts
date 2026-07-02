@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { sweepExpiredBookings, getTakenSeatIds } from "@/lib/availability";
 import { activeMovieCutoff } from "@/lib/movieAccess";
 import { verifyTelegramInitData } from "@/lib/telegramAuth";
+import { createSessionToken, getSessionTelegramId, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -11,17 +12,27 @@ export async function POST(req: NextRequest) {
   try {
     const { seatIds, sessionId, telegramId, initData, locale } = await req.json();
 
-    // In production, don't trust a client-supplied telegramId at face value -
-    // re-derive it from Telegram's HMAC-signed initData so a tampered/stale
-    // id (or a failed client-side identification) can't create a booking.
-    let verifiedTelegramId = telegramId;
-    if (process.env.NODE_ENV === "production") {
+    // Don't trust a client-supplied telegramId at face value - re-derive it
+    // from a previously-verified session cookie (survives cases where
+    // Telegram's hash/initData isn't available on this exact request), or
+    // failing that, from fresh HMAC-signed initData (which also mints a
+    // session cookie for next time). Only outside production, and only when
+    // neither is available, fall back to the raw client-supplied id so local
+    // UI dev works without a live Telegram session.
+    let verifiedTelegramId: string | null = getSessionTelegramId(req);
+    let freshSessionToken: string | null = null;
+
+    if (!verifiedTelegramId) {
       const botToken = process.env.BOT_TOKEN;
       const verified = botToken && initData ? verifyTelegramInitData(initData, botToken) : null;
-      if (!verified) {
+      if (verified) {
+        verifiedTelegramId = String(verified.user.id);
+        freshSessionToken = createSessionToken(verifiedTelegramId);
+      } else if (process.env.NODE_ENV !== "production") {
+        verifiedTelegramId = telegramId ?? null;
+      } else {
         return NextResponse.json({ error: "Invalid Telegram user" }, { status: 400 });
       }
-      verifiedTelegramId = String(verified.user.id);
     }
 
     if (!seatIds?.length || !sessionId || !verifiedTelegramId) {
@@ -52,11 +63,21 @@ export async function POST(req: NextRequest) {
       )
     );
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       bookings,
       bookingIds: bookings.map((b) => b.id).join(","),
       totalAmount: session.price * bookings.length,
     });
+    if (freshSessionToken) {
+      res.cookies.set(SESSION_COOKIE_NAME, freshSessionToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: SESSION_MAX_AGE_SECONDS,
+        path: "/",
+      });
+    }
+    return res;
   } catch (error) {
     console.error("Booking creation error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -20,6 +20,14 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
 const STAFF_SECRET = process.env.STAFF_SECRET;
 const STAFF_GROUP_ID = process.env.STAFF_GROUP_ID;
 
+// Launch with the locale already in the path so next-intl's middleware never
+// has to issue a redirect on the very first request. That redirect happens
+// before any client JS runs, and relies on the WebView correctly reapplying
+// the #tgWebAppData hash Telegram appended - not guaranteed on every engine.
+export function appUrlFor(locale: Locale): string {
+  return `${APP_URL.replace(/\/$/, "")}/${locale}`;
+}
+
 export const bot = new Bot(token);
 
 const LOCALES: Locale[] = ["uz", "ru", "en"];
@@ -417,7 +425,7 @@ bot.callbackQuery(/^reject:(.+)$/, async (ctx) => {
 // Build the persistent reply keyboard in the user's language
 function buildReplyKeyboard(locale: Locale) {
   return new Keyboard()
-    .webApp(tr(locale, "bot.bookButton"), APP_URL)
+    .webApp(tr(locale, "bot.bookButton"), appUrlFor(locale))
     .row()
     .text(tr(locale, "bot.kbTickets"))
     .text(tr(locale, "bot.kbLanguage"))
