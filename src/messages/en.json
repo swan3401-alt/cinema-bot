@@ -68,7 +68,7 @@
     "help": "Use /start to open the cinema booking app, /mytickets to see your tickets, /language to change language.",
     "receiptReceived": "✅ Receipt received! Our staff will confirm your payment shortly.",
     "noReservation": "We couldn't find a pending reservation. Please book a seat first.",
-    "rejected": "❌ Your payment could not be confirmed and the reservation was cancelled. Please try again or contact support: @faayziii",
+    "rejected": "❌ Your payment could not be confirmed and the reservation was cancelled. Please try again or contact support: @id1ot",
     "languagePrompt": "Choose your language:",
     "languageSet": "✅ Language set to English.",
     "myTicketsTitle": "🎟 Your tickets",
